@@ -276,6 +276,15 @@
 }
 .animate-tip-enter { animation: tip-enter 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards; }
 
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+.animate-shake { animation: shake 0.5s ease-in-out; }
+
 /* Utility for scene transitions */
 .duration-400 { transition-duration: 400ms; }
 

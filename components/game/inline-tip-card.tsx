@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from "react"
 import type { Effect, PostChoicePenalty } from "@/lib/game-data"
 import { STAT_CONFIG } from "@/lib/game-data"
 
-const AUTO_DISMISS_MS = 3000
+const AUTO_DISMISS_MS = 2000
+const COUNTDOWN_INTERVAL_MS = 1000
 
 interface InlineTipCardProps {
   choiceLabel: string
@@ -16,14 +17,23 @@ interface InlineTipCardProps {
 
 export function InlineTipCard({ choiceLabel, scienceTip, effect, penalty, onContinue }: InlineTipCardProps) {
   const [pressed, setPressed] = useState(false)
+  const [countdown, setCountdown] = useState(Math.ceil(AUTO_DISMISS_MS / COUNTDOWN_INTERVAL_MS))
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     timerRef.current = setTimeout(() => {
       onContinue()
     }, AUTO_DISMISS_MS)
+
+    setCountdown(Math.ceil(AUTO_DISMISS_MS / COUNTDOWN_INTERVAL_MS))
+    intervalRef.current = setInterval(() => {
+      setCountdown((c) => Math.max(0, c - 1))
+    }, COUNTDOWN_INTERVAL_MS)
+
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
+      if (intervalRef.current) clearInterval(intervalRef.current)
     }
   }, [onContinue])
 
@@ -98,11 +108,18 @@ export function InlineTipCard({ choiceLabel, scienceTip, effect, penalty, onCont
         </div>
 
         <div className="px-4 pt-3 pb-4">
-          <p className="text-[11px] text-slate-400 text-center mb-2">{"3 秒后自动进入下一题，也可点击下方按钮"}</p>
+          <p className="text-[11px] text-slate-400 text-center mb-2 flex items-center justify-center gap-1.5">
+            <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded border border-slate-300 bg-slate-100 text-slate-700 text-xs font-black tabular-nums">
+              {countdown}
+            </span>
+            {" 秒后自动进入下一题，也可点击下方按钮"}
+          </p>
           <button
             onClick={() => {
               if (timerRef.current) clearTimeout(timerRef.current)
               timerRef.current = null
+              if (intervalRef.current) clearInterval(intervalRef.current)
+              intervalRef.current = null
               onContinue()
             }}
             onPointerDown={() => setPressed(true)}
