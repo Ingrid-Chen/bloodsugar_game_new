@@ -2,8 +2,16 @@
 
 import Image from "next/image"
 import { useState, useEffect } from "react"
+import { BookOpen } from "lucide-react"
 import { STAT_CONFIG } from "@/lib/game-data"
 import { getNicknameCache, setNicknameCache, getSave, getHistory, NICKNAME_MAX_LEN } from "@/lib/storage"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 export type HomeAction = "new" | "continue" | "history"
 
@@ -53,6 +61,34 @@ export function HomeScreen({ defaultNickname = "", onAction }: HomeScreenProps) 
 
   return (
     <div className="h-svh max-h-[100dvh] flex flex-col items-center paper-bg relative overflow-hidden pt-safe">
+      {/* 右上角：活动规则 */}
+      <div className="absolute top-0 right-0 z-10 pt-safe pr-3">
+        <Dialog>
+          <DialogTrigger asChild>
+            <button
+              type="button"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 border-slate-800 shadow-[2px_2px_0px_0px_#1e293b] bg-white/90 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors"
+              aria-label="活动规则"
+            >
+              <BookOpen className="size-4" />
+              {"活动规则"}
+            </button>
+          </DialogTrigger>
+          <DialogContent className="max-h-[85vh] overflow-y-auto bg-[#FFFDF7] border-slate-800 shadow-[6px_6px_0px_0px_#1e293b]">
+            <DialogHeader>
+              <DialogTitle className="text-slate-800 text-lg font-black">活动规则说明</DialogTitle>
+            </DialogHeader>
+            <div className="text-sm text-slate-600 space-y-3 pr-6">
+              <p><strong className="text-slate-800">目标：</strong>在 7 天内通过每天的饮食与生活选择，维持血糖、心情、精力、饱腹四项数值在健康范围内，活过七天即胜利。</p>
+              <p><strong className="text-slate-800">每日流程：</strong>每天会经历多个时段（晨间、午间、下午、晚间、深夜），每个时段会出现一张情境卡片，你需要从两个选项中做出选择。你的选择会即时影响下方四项数值。</p>
+              <p><strong className="text-slate-800">四项数值：</strong>血糖、心情、精力、饱腹任一崩盘（过高或过低）都会导致游戏结束。合理搭配饮食与作息，才能稳定过关。</p>
+              <p><strong className="text-slate-800">操作方式：</strong>左右滑动卡片选择选项，或点击左右按钮。选择后可查看科普小贴士，了解选择背后的原理。</p>
+              <p><strong className="text-slate-800">复盘：</strong>游戏结束后可查看当日复盘与历史记录，帮助你在下次玩时做出更好的选择。</p>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
       {/* Top decorative - minimal */}
       <div className="shrink-0 w-full relative h-2" />
 
@@ -89,11 +125,11 @@ export function HomeScreen({ defaultNickname = "", onAction }: HomeScreenProps) 
         </div>
       </div>
 
-      {/* 昵称直接合并进气泡：在「帮助 XX 做出…」的 XX 处输入 */}
+      {/* 气泡：两行文案，昵称在「我是 XX」处输入 */}
       <div className="shrink-0 mt-1.5 sm:mt-2 mx-4 w-full max-w-sm">
         <div className="speech-bubble px-3 py-2.5 sm:py-3">
-          <p className="text-xs sm:text-sm text-slate-600 text-center leading-snug flex flex-wrap items-center justify-center gap-0.5">
-            {"帮助 "}
+          <p className="text-xs sm:text-sm text-slate-600 text-center leading-relaxed">
+            <span className="text-slate-600">{"我是 "}</span>
             <input
               type="text"
               value={nickname}
@@ -102,13 +138,17 @@ export function HomeScreen({ defaultNickname = "", onAction }: HomeScreenProps) 
               maxLength={NICKNAME_MAX_LEN}
               className="inline-block w-[4.5em] min-w-[3em] max-w-[6em] text-center font-black text-slate-800 placeholder:text-slate-400 bg-transparent border-b-2 border-dashed border-slate-400 focus:border-[#5a9a6e] focus:outline-none py-0"
             />
-            {" 做出正确饮食选择，活过 7 天!"}
+            <br />
+            {"我要做出正确选择，才能活过七天。"}
           </p>
         </div>
       </div>
 
-      {/* Stat pills - 手机端略大 */}
-      <div className="shrink-0 mt-2 sm:mt-2.5 grid grid-cols-2 gap-1.5 px-4 max-w-xs w-full">
+      {/* 四项数值 + 提示：每个选择都会影响 */}
+      <p className="shrink-0 mt-1.5 sm:mt-2 text-[10px] sm:text-xs text-slate-500 text-center px-2">
+        {"你的每个选择都会影响下面四项 →"}
+      </p>
+      <div className="shrink-0 mt-1 grid grid-cols-2 gap-1.5 px-4 max-w-xs w-full">
         {STAT_CONFIG.map((s) => (
           <div
             key={s.key}
