@@ -1,0 +1,290 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #FDFBF7;
+  --foreground: #1e293b;
+  --card: #FFFDF7;
+  --card-foreground: #1e293b;
+  --popover: #FFFDF7;
+  --popover-foreground: #1e293b;
+  --primary: #5a9a6e;
+  --primary-foreground: #FDFBF7;
+  --secondary: #f5c542;
+  --secondary-foreground: #1e293b;
+  --muted: #f3edd8;
+  --muted-foreground: #64748b;
+  --accent: #e8824a;
+  --accent-foreground: #FDFBF7;
+  --destructive: #e05a5a;
+  --destructive-foreground: #FDFBF7;
+  --border: #1e293b;
+  --input: #f3edd8;
+  --ring: #5a9a6e;
+
+  /* Game stat colors - healing palette */
+  --game-blood: #e05a5a;
+  --game-mood: #f5c542;
+  --game-energy: #5a9a6e;
+  --game-satiety: #e8824a;
+  --game-blood-bg: #fde8e8;
+  --game-mood-bg: #fef6d4;
+  --game-energy-bg: #e0f0e4;
+  --game-satiety-bg: #fdecd8;
+
+  --radius: 1rem;
+  --ink: #1e293b;
+  --paper: #FDFBF7;
+  --shadow-hard: 4px 4px 0px 0px rgba(30,41,59,1);
+  --shadow-hard-sm: 2px 2px 0px 0px rgba(30,41,59,1);
+  --shadow-hard-pressed: 0px 0px 0px 0px rgba(30,41,59,1);
+}
+
+.dark {
+  --background: #FDFBF7;
+  --foreground: #1e293b;
+  --card: #FFFDF7;
+  --card-foreground: #1e293b;
+  --popover: #FFFDF7;
+  --popover-foreground: #1e293b;
+  --primary: #5a9a6e;
+  --primary-foreground: #FDFBF7;
+  --secondary: #f5c542;
+  --secondary-foreground: #1e293b;
+  --muted: #f3edd8;
+  --muted-foreground: #64748b;
+  --accent: #e8824a;
+  --accent-foreground: #FDFBF7;
+  --destructive: #e05a5a;
+  --destructive-foreground: #FDFBF7;
+  --border: #1e293b;
+  --input: #f3edd8;
+  --ring: #5a9a6e;
+}
+
+@theme inline {
+  --font-sans: 'Nunito', 'Noto Sans SC', sans-serif;
+  --font-serif: 'Noto Sans SC', serif;
+  --font-mono: 'Geist Mono', monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--background);
+  --color-sidebar-foreground: var(--foreground);
+  --color-sidebar-primary: var(--primary);
+  --color-sidebar-primary-foreground: var(--primary-foreground);
+  --color-sidebar-accent: var(--accent);
+  --color-sidebar-accent-foreground: var(--accent-foreground);
+  --color-sidebar-border: var(--border);
+  --color-sidebar-ring: var(--ring);
+}
+
+/* Safe area for notched phones (use with viewport-fit: cover) */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0);
+}
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ===== Cozy Hand-drawn Doodle Style ===== */
+
+/* Paper texture background */
+.paper-bg {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(ellipse at 15% 25%, rgba(245,197,66,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 85% 75%, rgba(232,130,74,0.05) 0%, transparent 60%),
+    url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* Core: thick ink border + hard offset shadow (sticker feel) */
+.doodle-card {
+  border: 2.5px solid var(--ink);
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow-hard);
+  background: var(--card);
+}
+
+/* Doodle button: press-down feedback */
+.doodle-btn {
+  border: 2.5px solid var(--ink);
+  border-radius: 0.875rem;
+  box-shadow: var(--shadow-hard);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 700;
+}
+.doodle-btn:hover {
+  filter: brightness(1.03);
+}
+.doodle-btn:active,
+.doodle-btn-pressed {
+  transform: translate(4px, 4px);
+  box-shadow: var(--shadow-hard-pressed);
+}
+
+/* Capsule stat bar with thick border */
+.stat-capsule {
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: var(--shadow-hard-sm);
+  background: var(--card);
+  overflow: hidden;
+}
+
+/* Speech bubble */
+.speech-bubble {
+  position: relative;
+  background: var(--card);
+  border: 2.5px solid var(--ink);
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow-hard);
+}
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 12px solid var(--card);
+  filter: drop-shadow(0 2.5px 0 var(--ink));
+}
+
+/* Doodle tag/badge */
+.doodle-tag {
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: var(--shadow-hard-sm);
+  font-weight: 700;
+}
+
+/* ===== Animations ===== */
+@keyframes swipe-left {
+  0% { transform: translateX(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateX(-140%) rotate(-18deg); opacity: 0; }
+}
+@keyframes swipe-right {
+  0% { transform: translateX(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateX(140%) rotate(18deg); opacity: 0; }
+}
+@keyframes card-enter {
+  0% { transform: scale(0.9) translateY(30px) rotate(-2deg); opacity: 0; }
+  100% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; }
+}
+@keyframes bounce-pop {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+@keyframes float-up {
+  0% { transform: translateY(16px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes stat-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+@keyframes diff-fly {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-20px); opacity: 0; }
+}
+
+.animate-swipe-left { animation: swipe-left 0.45s ease-in forwards; }
+.animate-swipe-right { animation: swipe-right 0.45s ease-in forwards; }
+.animate-card-enter { animation: card-enter 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.animate-bounce-pop { animation: bounce-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+.animate-float-up { animation: float-up 0.4s ease-out both; }
+.animate-float-slow { animation: float-slow 3s ease-in-out infinite; }
+.animate-stat-pop { animation: stat-pop 0.35s ease-out; }
+.animate-wiggle { animation: wiggle 2.5s ease-in-out infinite; }
+.animate-diff-fly { animation: diff-fly 0.8s ease-out forwards; }
+
+/* Floating number change indicators */
+@keyframes float-number {
+  0% { transform: translateY(0) scale(0.5); opacity: 0; }
+  20% { transform: translateY(-8px) scale(1.2); opacity: 1; }
+  40% { transform: translateY(-16px) scale(1); opacity: 1; }
+  100% { transform: translateY(-40px) scale(0.9); opacity: 0; }
+}
+.animate-float-number { animation: float-number 1.4s ease-out forwards; }
+
+/* Blood sugar danger breathing pulse */
+@keyframes danger-pulse {
+  0%, 100% { border-color: #e05a5a; box-shadow: 1.5px 1.5px 0px 0px #e05a5a; }
+  50% { border-color: #ff3333; box-shadow: 1.5px 1.5px 0px 0px #ff3333, 0 0 8px 2px rgba(224,90,90,0.3); }
+}
+.animate-danger-pulse { animation: danger-pulse 1.2s ease-in-out infinite; }
+
+/* Low blood sugar warning shake (yellow) */
+@keyframes low-sugar-shake {
+  0%, 100% { transform: translateX(0); border-color: #f5c542; box-shadow: 1.5px 1.5px 0px 0px #d4a017; }
+  25% { transform: translateX(-1.5px); }
+  75% { transform: translateX(1.5px); }
+}
+.animate-low-sugar-shake { animation: low-sugar-shake 0.8s ease-in-out infinite; }
+
+/* Science tip popup slide in */
+@keyframes tip-enter {
+  0% { transform: translateY(40px) scale(0.9) rotate(-1deg); opacity: 0; }
+  100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+}
+.animate-tip-enter { animation: tip-enter 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+/* Utility for scene transitions */
+.duration-400 { transition-duration: 400ms; }
+
+/* Touch swipe styling */
+.swipe-card {
+  touch-action: pan-y;
+  user-select: none;
+  cursor: grab;
+}
+.swipe-card:active {
+  cursor: grabbing;
+}
