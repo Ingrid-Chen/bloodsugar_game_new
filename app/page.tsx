@@ -76,6 +76,13 @@ export default function Page() {
       setView("recap")
       return
     }
+    if (trimmed) {
+      fetch("/api/participate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nickname: trimmed }),
+      }).catch(() => {})
+    }
     setView("game")
     if (action === "continue") {
       const save = getSave(trimmed)
@@ -117,8 +124,16 @@ export default function Page() {
     slotEvent && typeof slotEvent === "object" ? TIME_SLOT_META[slotEvent.group] : null
   const totalSlots = 5
 
+  const hasDanger =
+    stats.bloodSugar > 100 ||
+    stats.bloodSugar <= 10 ||
+    stats.mood <= 0 ||
+    stats.energy <= 0
+
   return (
-    <main className="h-svh max-h-[100dvh] min-h-0 paper-bg flex flex-col overflow-hidden">
+    <main
+      className={`h-svh max-h-[100dvh] min-h-0 paper-bg flex flex-col overflow-hidden ${hasDanger ? "animate-global-danger" : ""}`}
+    >
       <div
         className="sticky top-0 z-30 shrink-0 border-b-2 border-slate-800/10 pt-safe"
         style={{ backgroundColor: "#FDFBF7ee", backdropFilter: "blur(8px)" }}

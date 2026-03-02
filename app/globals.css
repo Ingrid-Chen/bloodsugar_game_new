@@ -285,6 +285,42 @@
 }
 .animate-shake { animation: shake 0.5s ease-in-out; }
 
+/* Satiety high: bloat / 膨胀感 */
+@keyframes satiety-bloat {
+  0%, 100% { transform: scaleX(1) scaleY(1); }
+  40% { transform: scaleX(1.08) scaleY(1.15); }
+  60% { transform: scaleX(1.05) scaleY(1.1); }
+}
+.animate-satiety-bloat { animation: satiety-bloat 1.3s ease-in-out infinite; }
+
+/* Energy low: slow breathing */
+@keyframes energy-breath {
+  0%, 100% { transform: scale(0.96); }
+  50% { transform: scale(1.04); }
+}
+.animate-energy-breath { animation: energy-breath 1.6s ease-in-out infinite; }
+
+/* Mood crash: intense shiver */
+@keyframes mood-shiver {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-2px); }
+  20% { transform: translateX(2px); }
+  30% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  50% { transform: translateX(-2px); }
+  60% { transform: translateX(2px); }
+  70% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+}
+.animate-mood-shiver { animation: mood-shiver 0.8s ease-in-out infinite; }
+
+/* Global danger: any stat abnormal — subtle screen tension */
+@keyframes global-danger {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; filter: none; }
+  50% { box-shadow: inset 0 0 60px 0 rgba(224,90,90,0.08); filter: saturate(1.05); }
+}
+.animate-global-danger { animation: global-danger 2s ease-in-out infinite; }
+
 /* Utility for scene transitions */
 .duration-400 { transition-duration: 400ms; }
 

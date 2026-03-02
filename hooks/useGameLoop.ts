@@ -40,6 +40,7 @@ export function useGameLoop() {
   const [gameOverReason, setGameOverReason] = useState("")
   const [cardKey, setCardKey] = useState(0)
   const [pendingTip, setPendingTip] = useState<PendingTip | null>(null)
+  const [pendingGameOverReason, setPendingGameOverReason] = useState<string | null>(null)
   const [nightlyReport, setNightlyReport] = useState<NightlyReport | null>(null)
   const [trackers, setTrackers] = useState<GameTrackers>({
     peakBsCount: 0,
@@ -95,7 +96,14 @@ export function useGameLoop() {
 
       if ("deathReason" in result) {
         setGameOverReason(result.deathReason)
-        setPhase("gameover")
+        setPendingGameOverReason(result.deathReason)
+        setPendingTip({
+          choiceLabel: choice.label,
+          scienceTip: choice.scienceTip,
+          effect: choice.effect,
+          penalty: { foodComa: false, starvation: false },
+        })
+        setPhase("tip")
         return
       }
 
@@ -109,6 +117,13 @@ export function useGameLoop() {
   )
 
   const handleDismissTip = useCallback(() => {
+    if (pendingGameOverReason) {
+      setGameOverReason(pendingGameOverReason)
+      setPendingGameOverReason(null)
+      setPendingTip(null)
+      setPhase("gameover")
+      return
+    }
     setPendingTip(null)
     let s = stats
     let nextIdx = eventIndexInDay + 1
@@ -137,7 +152,7 @@ export function useGameLoop() {
     setEventIndexInDay(nextIdx)
     setCardKey((k) => k + 1)
     setPhase("playing")
-  }, [stats, eventIndexInDay, dayQueue, eveningSkipped])
+  }, [stats, eventIndexInDay, dayQueue, eveningSkipped, pendingGameOverReason])
 
   const handleDaySummaryDone = useCallback(() => {
     const decayed = applyDayEndDecay(stats)

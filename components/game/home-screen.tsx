@@ -27,11 +27,29 @@ export function HomeScreen({ defaultNickname = "", onAction }: HomeScreenProps) 
   const [hasHistory, setHasHistory] = useState(false)
   const [showNicknameHint, setShowNicknameHint] = useState(false)
   const [shakeKey, setShakeKey] = useState(0)
+  const [stats, setStats] = useState<{ visitCount: number; participantCount: number } | null>(null)
   const hintTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     setNickname(defaultNickname || getNicknameCache())
   }, [defaultNickname])
+
+  useEffect(() => {
+    const run = async () => {
+      try {
+        await fetch("/api/visit", { method: "POST" })
+        const res = await fetch("/api/stats")
+        const data = await res.json()
+        setStats({
+          visitCount: Number(data.visitCount) || 0,
+          participantCount: Number(data.participantCount) || 0,
+        })
+      } catch {
+        setStats({ visitCount: 0, participantCount: 0 })
+      }
+    }
+    run()
+  }, [])
 
   useEffect(() => {
     const t = nickname.trim().slice(0, NICKNAME_MAX_LEN)
@@ -229,8 +247,14 @@ export function HomeScreen({ defaultNickname = "", onAction }: HomeScreenProps) 
         </p>
       </div>
 
-      {/* 底部留白与装饰 - 与顶部平衡 */}
-      <div className="shrink-0 w-full h-8" aria-hidden />
+      {/* 底部：历史累计统计（X人已进行Y次挑战） */}
+      <div className="shrink-0 w-full py-3 flex justify-center">
+        <p className="text-[11px] text-slate-500">
+          {stats
+            ? `${stats.participantCount}人已进行${stats.visitCount}次挑战`
+            : "—人已进行—次挑战"}
+        </p>
+      </div>
       <svg className="absolute bottom-0 left-0 right-0 opacity-20 pointer-events-none h-6 sm:h-8" viewBox="0 0 400 32" preserveAspectRatio="none" fill="none">
         <path d="M0 32 Q8 16 16 28 Q24 8 32 24 Q40 12 48 28 Q56 4 64 24 Q72 14 80 28 Q88 6 96 24 Q104 14 112 28 Q120 4 128 24 Q136 12 144 28 Q152 6 160 26 Q168 14 176 28 Q184 8 192 24 Q200 12 208 28 Q216 4 224 24 Q232 14 240 28 Q248 6 256 24 Q264 12 272 28 Q280 4 288 24 Q296 14 304 28 Q312 6 320 24 Q328 12 336 28 Q344 4 352 24 Q360 14 368 28 Q376 8 384 24 Q392 14 400 28 V32 Z" fill="#5a9a6e"/>
       </svg>

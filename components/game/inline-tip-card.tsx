@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import type { Effect, PostChoicePenalty } from "@/lib/game-data"
 import { STAT_CONFIG } from "@/lib/game-data"
 
-const AUTO_DISMISS_MS = 5000
+const AUTO_DISMISS_MS = 8000
 const COUNTDOWN_INTERVAL_MS = 1000
 
 interface InlineTipCardProps {
