@@ -1,6 +1,6 @@
 /**
  * 压缩 public/images 下的 jpg/png，缩小体积以加快加载。
- * 目标：最大边 1024px，JPEG 质量 82，保持视觉可接受。
+ * 策略：最大边 1024px，轻度锐化提升观感清晰度，JPEG 质量 88 + mozjpeg。
  */
 import sharp from "sharp"
 import { readdir, stat } from "fs/promises"
@@ -12,7 +12,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const IMAGES_DIR = join(__dirname, "..", "public", "images")
 
 const MAX_SIZE = 1024
-const JPEG_QUALITY = 82
+const JPEG_QUALITY = 88
+/** 锐化强度：sigma 越大锐化越强，1–1.5 较自然 */
+const SHARPEN_SIGMA = 1.2
 const EXT = [".jpg", ".jpeg", ".png"]
 
 async function compressImages() {
@@ -27,8 +29,9 @@ async function compressImages() {
     totalBefore += st.size
 
     const isPng = name.toLowerCase().endsWith(".png")
-    const pipeline = sharp(inputPath)
+    let pipeline = sharp(inputPath)
       .resize(MAX_SIZE, MAX_SIZE, { fit: "inside", withoutEnlargement: true })
+      .sharpen({ sigma: SHARPEN_SIGMA })
 
     if (isPng) {
       await pipeline.png({ compressionLevel: 8 }).toFile(inputPath + ".tmp")

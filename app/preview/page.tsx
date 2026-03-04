@@ -7,15 +7,23 @@ import Link from "next/link"
 const SCENE_IMAGES: { file: string; name: string }[] = [
   { file: "s-morning.jpg", name: "早晨/起床/户外/路上" },
   { file: "s-breakfast.jpg", name: "早餐/餐桌早餐" },
+  { file: "s-breakfast-2.jpg", name: "早餐变体（吧台/柜台）" },
   { file: "s-lunch.jpg", name: "午餐/外卖/食堂/简餐" },
+  { file: "s-lunch-2.jpg", name: "午餐变体（工位/简餐）" },
   { file: "s-tea.jpg", name: "下午茶/办公室/零食/奶茶" },
+  { file: "s-tea-2.jpg", name: "下午茶变体（沙发/休息）" },
+  { file: "s-tea-3.jpg", name: "下午茶变体（窗边/甜品）" },
   { file: "s-exercise.jpg", name: "运动/晨练/打球/练后" },
   { file: "s-light-meal.jpg", name: "轻食/减脂餐/沙拉" },
+  { file: "s-light-meal-2.jpg", name: "轻食变体" },
   { file: "s-bedtime.jpg", name: "睡前/卧室" },
   { file: "s-midnight-snack.jpg", name: "夜宵/深夜小食" },
   { file: "s-dinner.jpg", name: "晚饭/家常菜/厨房" },
+  { file: "s-dinner-2.jpg", name: "晚饭变体（煲汤/家常）" },
   { file: "s-dinner-party.jpg", name: "火锅/饭局/社交/喝酒" },
-  { file: "s-low-sugar.jpg", name: "低血糖/疲惫/急救" },
+  { file: "s-low-sugar.jpg", name: "低血糖/疲惫" },
+  { file: "s-low-sugar-2.jpg", name: "低血糖变体（伏案）" },
+  { file: "s-low-sugar-3.jpg", name: "低血糖变体（站立/不稳）" },
 ]
 
 /** 界面用图 */

@@ -9,6 +9,7 @@ import {
   computeChoiceResult,
   generateDayQueue,
   checkGameOver,
+  getEventById,
   type GameStats,
   type GameEvent,
   type GameTrackers,
@@ -198,7 +199,14 @@ export function useGameLoop() {
     setStats(data.stats)
     setPrevStats(data.prevStats)
     setCurrentDay(data.currentDay)
-    setDayQueue(data.dayQueue)
+    // 用当前 game-data 里的事件刷新队列，使 image 等字段为最新（读档后能看到新图）
+    setDayQueue(
+      data.dayQueue.map((ev) => {
+        if (ev == null) return null
+        const current = getEventById(ev.id)
+        return current ?? ev
+      })
+    )
     setEventIndexInDay(data.eventIndexInDay)
     setGameOverReason(data.gameOverReason ?? "")
     setCardKey(data.cardKey ?? 0)
