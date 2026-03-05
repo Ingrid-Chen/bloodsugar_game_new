@@ -587,6 +587,10 @@ function getSpecialLowSugarDay(): number {
   return specialLowSugarDay
 }
 
+export function isLowSugarFocusDay(dayNumber: number): boolean {
+  return dayNumber === getSpecialLowSugarDay()
+}
+
 const GROUP_ORDER: EventGroup[] = ["breakfast", "lunch", "afternoon", "dinner", "evening"]
 
 function shuffle<T>(arr: T[]): T[] {
@@ -687,19 +691,9 @@ export function generateDayQueue(usedIds: Set<number>, dayNumber: number): {
   const isLowSugarFocusDay = dayNumber === getSpecialLowSugarDay()
   const queue: (GameEvent | null)[] = []
   const usedImagesForDay = new Set<string>()
-  // Monday breakfast fixed to event 1 for narrative consistency
-  if (dayNumber === 1) {
-    const fixed = BREAKFAST_EVENTS.find((e) => e.id === 1)
-    if (!fixed) {
-      queue[0] = pickOneForGroup("breakfast", usedIds, isWeekend, isLowSugarFocusDay, usedImagesForDay)
-    } else {
-      queue[0] = fixed
-      usedIds.add(fixed.id)
-      usedImagesForDay.add(fixed.image)
-    }
-  } else {
-    queue[0] = pickOneForGroup("breakfast", usedIds, isWeekend, isLowSugarFocusDay, usedImagesForDay)
-  }
+
+  // 早餐也完全走统一的随机逻辑，不再强制周一固定为事件 1
+  queue[0] = pickOneForGroup("breakfast", usedIds, isWeekend, isLowSugarFocusDay, usedImagesForDay)
 
   queue[1] = pickOneForGroup("lunch", usedIds, isWeekend, isLowSugarFocusDay, usedImagesForDay)
   queue[2] =
@@ -794,10 +788,23 @@ export const GAME_OVER_MESSAGES: Record<string, { title: string; subtitle: strin
   energyZero:     { title: "过劳晕倒", subtitle: "身体发出了最后的警报，你倒在了去便利店的路上" },
 }
 
-// v2.3 Death: blood sugar > 100 (NOT >=100), blood sugar <= 10, energy <= 0, mood <= 0
-export function checkGameOver(stats: GameStats): { isOver: boolean; reason: string } | null {
+// v2.3 Death: blood sugar > 100 (NOT >=100), blood sugar <= LOW_BS_DEATH, energy <= 0, mood <= 0
+// 普通日与低血糖日使用不同的低血糖死亡线
+const LOW_BS_DEATH_NORMAL = 22
+const LOW_BS_DEATH_FOCUS = 29
+
+function getLowBsDeathThreshold(isLowSugarFocusDay: boolean): number {
+  return isLowSugarFocusDay ? LOW_BS_DEATH_FOCUS : LOW_BS_DEATH_NORMAL
+}
+
+export function checkGameOver(
+  stats: GameStats,
+  opts?: { isLowSugarFocusDay?: boolean }
+): { isOver: boolean; reason: string } | null {
+  const isLowSugar = opts?.isLowSugarFocusDay ?? false
+  const threshold = getLowBsDeathThreshold(isLowSugar)
   if (stats.bloodSugar > 100) return { isOver: true, reason: "bloodSugarHigh" }
-  if (stats.bloodSugar <= 15) return { isOver: true, reason: "bloodSugarLow" }
+  if (stats.bloodSugar <= threshold) return { isOver: true, reason: "bloodSugarLow" }
   if (stats.mood <= 0) return { isOver: true, reason: "moodZero" }
   if (stats.energy <= 0) return { isOver: true, reason: "energyZero" }
   return null
@@ -819,13 +826,16 @@ export function computeChoiceResult(
   prevStats: GameStats,
   prevTrackers: GameTrackers,
   choice: { label: string; effect: Effect; scienceTip: string },
-  preEffect?: Effect
+  preEffect?: Effect,
+  opts?: { isLowSugarFocusDay?: boolean }
 ): ChoiceResultSuccess | ChoiceResultDeath {
+  const isLowSugar = opts?.isLowSugarFocusDay ?? false
+  const threshold = getLowBsDeathThreshold(isLowSugar)
   let raw = applyEffectRaw(prevStats, preEffect ?? {})
   raw = applyEffectRaw(raw, choice.effect)
 
   if (raw.bloodSugar > 100) return { deathReason: "bloodSugarHigh" }
-  if (raw.bloodSugar <= 15) return { deathReason: "bloodSugarLow" }
+  if (raw.bloodSugar <= threshold) return { deathReason: "bloodSugarLow" }
   if (raw.energy <= 0) return { deathReason: "energyZero" }
   if (raw.mood <= 0) return { deathReason: "moodZero" }
 
@@ -926,18 +936,33 @@ export function applyPostChoicePenalties(stats: GameStats): { stats: GameStats; 
   return { stats: s, penalty }
 }
 
-// Inter-meal metabolism: blood sugar toward 45 (40% of gap, max 12). When already low (<30), no pull-up so extreme choices can reach death.
-export function applyInterMealMetabolism(stats: GameStats): GameStats {
+// Inter-meal metabolism: blood sugar toward 45 (40% of gap, max 12).
+// 普通日 vs 低血糖日使用不同的拉回/漂移参数。
+export function applyInterMealMetabolism(
+  stats: GameStats,
+  opts?: { isLowSugarFocusDay?: boolean }
+): GameStats {
   const CENTER = 45
+  const isLowSugar = opts?.isLowSugarFocusDay ?? false
   let bsDelta: number
   if (stats.bloodSugar > CENTER) {
     bsDelta = -Math.min(12, Math.floor((stats.bloodSugar - CENTER) * 0.4))
   } else if (stats.bloodSugar >= 30) {
-    // 30–45: weak pull toward 45 (half strength) so low sugar can persist
-    bsDelta = Math.min(6, Math.floor((CENTER - stats.bloodSugar) * 0.2))
+    if (isLowSugar) {
+      // 低血糖日：回拉更弱，让轻度低血糖更容易持续
+      bsDelta = Math.min(4, Math.floor((CENTER - stats.bloodSugar) * 0.15))
+    } else {
+      // 普通日：原先的较温和回拉
+      bsDelta = Math.min(6, Math.floor((CENTER - stats.bloodSugar) * 0.2))
+    }
   } else {
-    // <30: no recovery, slight drift down so next bad choice can cross death line
-    bsDelta = -2
+    if (isLowSugar) {
+      // 低血糖日：<30 每步 -4，比普通日明显更容易跨过死亡线
+      bsDelta = -4
+    } else {
+      // 普通日：<30 每步 -3，仍有危险，但相对温和
+      bsDelta = -3
+    }
   }
 
   return {

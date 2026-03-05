@@ -10,6 +10,7 @@ import {
   generateDayQueue,
   checkGameOver,
   getEventById,
+  isLowSugarFocusDay,
   type GameStats,
   type GameEvent,
   type GameTrackers,
@@ -88,11 +89,14 @@ export function useGameLoop() {
       const choice = currentEvent.choices[choiceIndex]
       if (!choice) return
 
+      const isLowSugar = isLowSugarFocusDay(currentDay)
+
       const result = computeChoiceResult(
         stats,
         trackers,
         { label: choice.label, effect: choice.effect, scienceTip: choice.scienceTip },
-        currentEvent.preEffect
+        currentEvent.preEffect,
+        { isLowSugarFocusDay: isLowSugar }
       )
 
       if ("deathReason" in result) {
@@ -114,7 +118,7 @@ export function useGameLoop() {
       setPendingTip(result.pendingTip)
       setPhase("tip")
     },
-    [dayQueue, eventIndexInDay, stats, trackers]
+    [dayQueue, eventIndexInDay, stats, trackers, currentDay]
   )
 
   const handleDismissTip = useCallback(() => {
@@ -126,17 +130,18 @@ export function useGameLoop() {
       return
     }
     setPendingTip(null)
+    const isLowSugar = isLowSugarFocusDay(currentDay)
     let s = stats
     let nextIdx = eventIndexInDay + 1
 
-    s = applyInterMealMetabolism(s)
+    s = applyInterMealMetabolism(s, { isLowSugarFocusDay: isLowSugar })
     while (nextIdx < 5 && dayQueue[nextIdx] === null) {
-      s = applyInterMealMetabolism(s)
+      s = applyInterMealMetabolism(s, { isLowSugarFocusDay: isLowSugar })
       nextIdx++
     }
 
     if (nextIdx >= 5) {
-      if (eveningSkipped) s = applyInterMealMetabolism(s)
+      if (eveningSkipped) s = applyInterMealMetabolism(s, { isLowSugarFocusDay: isLowSugar })
       const sleepBs = s.bloodSugar
       setTrackers((prev) => ({
         ...prev,
@@ -153,14 +158,15 @@ export function useGameLoop() {
     setEventIndexInDay(nextIdx)
     setCardKey((k) => k + 1)
     setPhase("playing")
-  }, [stats, eventIndexInDay, dayQueue, eveningSkipped, pendingGameOverReason])
+  }, [stats, eventIndexInDay, dayQueue, eveningSkipped, pendingGameOverReason, currentDay])
 
   const handleDaySummaryDone = useCallback(() => {
     const decayed = applyDayEndDecay(stats)
     setPrevStats(stats)
     setStats(decayed)
 
-    const death = checkGameOver(decayed)
+    const isLowSugar = isLowSugarFocusDay(currentDay)
+    const death = checkGameOver(decayed, { isLowSugarFocusDay: isLowSugar })
     if (death) {
       setGameOverReason(death.reason)
       setPhase("gameover")
