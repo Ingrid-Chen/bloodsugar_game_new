@@ -205,12 +205,13 @@ export function useGameLoop() {
     setStats(data.stats)
     setPrevStats(data.prevStats)
     setCurrentDay(data.currentDay)
-    // 用当前 game-data 里的事件刷新队列，使 image 等字段为最新（读档后能看到新图）
+    // 用当前 game-data 刷新事件（image 等），但保留读档时的选项顺序，避免丢失打乱后的 A/B 顺序
     setDayQueue(
       data.dayQueue.map((ev) => {
         if (ev == null) return null
         const current = getEventById(ev.id)
-        return current ?? ev
+        if (!current) return ev
+        return { ...current, choices: ev.choices }
       })
     )
     setEventIndexInDay(data.eventIndexInDay)

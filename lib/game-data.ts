@@ -603,13 +603,9 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 function shuffleChoicesForEvent(event: GameEvent): GameEvent {
-  // 随机打乱 AB 选项顺序，避免「总是选 B 就安全」的暗示
-  if (Math.random() < 0.5) return event
+  // 50% 交换 AB 顺序，使「更优选项」出现在 A 或 B 的概率相当，避免选 B 更优概率偏高
   const [a, b] = event.choices
-  return {
-    ...event,
-    choices: [b, a],
-  }
+  return Math.random() < 0.5 ? event : { ...event, choices: [b, a] }
 }
 
 /** Draw one from pool without replacement; reshuffle pool when exhausted. Respects weekday/weekend flags. */
