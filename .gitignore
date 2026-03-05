@@ -41,3 +41,34 @@ Thumbs.db
 
 # 超大文档（超 GitHub 100MB 限制，仅本地保留）
 docs/事件-图片对应表.md
+
+# 备份/归档（运行不需要）
+*.zip
+public 2/
+docs/XXos8nbp
+
+# 运行不需要的图片（保留本地可删，从仓库移除以减体积）
+public/placeholder.jpg
+public/placeholder-logo.png
+public/placeholder-logo.svg
+public/placeholder-user.jpg
+public/placeholder.svg
+public/images/s-bedtime.jpg
+public/images/s-breakfast-2.jpg
+public/images/s-dinner-2.jpg
+public/images/s-dinner-party.jpg
+public/images/s-dinner.jpg
+public/images/s-exercise.jpg
+public/images/s-light-meal-2.jpg
+public/images/s-light-meal.jpg
+public/images/s-low-sugar-2.jpg
+public/images/s-low-sugar-3.jpg
+public/images/s-low-sugar.jpg
+public/images/s-lunch-2.jpg
+public/images/s-lunch.jpg
+public/images/s-midnight-snack.jpg
+public/images/s-morning.jpg
+public/images/s-outside.jpg
+public/images/s-tea-2.jpg
+public/images/s-tea-3.jpg
+public/images/s-tea.jpg
