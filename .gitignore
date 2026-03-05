@@ -38,3 +38,6 @@ next-env.d.ts
 # OS
 .DS_Store
 Thumbs.db
+
+# 超大文档（超 GitHub 100MB 限制，仅本地保留）
+docs/事件-图片对应表.md
