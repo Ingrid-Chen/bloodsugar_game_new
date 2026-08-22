@@ -395,7 +395,10 @@ page,
 
 .game-body {
   height: calc(100vh - 286rpx);
-  padding: 26rpx 28rpx 60rpx;
+
+  &__content {
+    padding: 26rpx 28rpx 60rpx;
+  }
 }
 
 .event-progress {
@@ -709,7 +712,10 @@ page,
   z-index: 1;
   width: 100%;
   height: 76vh;
-  padding: 36rpx 30rpx;
+
+  &__content {
+    padding: 36rpx 30rpx;
+  }
 
   &__title {
     display: block;

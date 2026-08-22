@@ -106,14 +106,16 @@ function RulesOverlay({ onClose }: { onClose: () => void }) {
     <View className='overlay'>
       <View className='overlay__mask' onClick={onClose} />
       <ScrollView className='modal doodle-card' scrollY>
-        <Text className='modal__title'>活动规则</Text>
-        <Text className='modal__paragraph'>目标：在七天生活情境中做出饮食与生活选择，让血糖、心情、精力和饱腹保持在安全范围。</Text>
-        <Text className='modal__paragraph'>操作：每个情境从左右两个选项中选择一个，随后查看数值影响和科普说明。</Text>
-        <Text className='modal__paragraph'>说明：游戏中的数值均为模拟分数，不是真实血糖或医学检测结果。</Text>
-        <View className='notice-box'>
-          <Text>本小程序仅用于一般健康科普，不构成疾病诊断、治疗或个体化医疗建议。</Text>
+        <View className='modal__content'>
+          <Text className='modal__title'>活动规则</Text>
+          <Text className='modal__paragraph'>目标：在七天生活情境中做出饮食与生活选择，让血糖、心情、精力和饱腹保持在安全范围。</Text>
+          <Text className='modal__paragraph'>操作：每个情境从左右两个选项中选择一个，随后查看数值影响和科普说明。</Text>
+          <Text className='modal__paragraph'>说明：游戏中的数值均为模拟分数，不是真实血糖或医学检测结果。</Text>
+          <View className='notice-box'>
+            <Text>本小程序仅用于一般健康科普，不构成疾病诊断、治疗或个体化医疗建议。</Text>
+          </View>
+          <DoodleButton onClick={onClose}>我知道了</DoodleButton>
         </View>
-        <DoodleButton onClick={onClose}>我知道了</DoodleButton>
       </ScrollView>
     </View>
   )
@@ -226,26 +228,28 @@ function GameScreen({
       </View>
 
       <ScrollView className='game-body' scrollY>
-        <View className='event-progress'>情境 {eventIndex} / {queueLength}</View>
-        <View className='event-card doodle-card'>
-          <Image className='event-card__image' src={getImage(event.image)} mode='aspectFill' />
-          <View className='event-card__content'>
-            <Text className='event-card__title'>{event.title}</Text>
-            <Text className='event-card__description'>{event.description}</Text>
+        <View className='game-body__content'>
+          <View className='event-progress'>情境 {eventIndex} / {queueLength}</View>
+          <View className='event-card doodle-card'>
+            <Image className='event-card__image' src={getImage(event.image)} mode='aspectFill' />
+            <View className='event-card__content'>
+              <Text className='event-card__title'>{event.title}</Text>
+              <Text className='event-card__description'>{event.description}</Text>
+            </View>
+            <View className='choices'>
+              {event.choices.map((choice, index) => (
+                <Button
+                  className={`choice-button choice-button--${index === 0 ? 'green' : 'yellow'}`}
+                  key={`${event.id}-${index}`}
+                  onClick={() => onChoose(choice.effect, index)}
+                >
+                  {choice.label}
+                </Button>
+              ))}
+            </View>
           </View>
-          <View className='choices'>
-            {event.choices.map((choice, index) => (
-              <Button
-                className={`choice-button choice-button--${index === 0 ? 'green' : 'yellow'}`}
-                key={`${event.id}-${index}`}
-                onClick={() => onChoose(choice.effect, index)}
-              >
-                {choice.label}
-              </Button>
-            ))}
-          </View>
+          <Text className='game-hint'>点击一个选项，查看它带来的模拟影响</Text>
         </View>
-        <Text className='game-hint'>点击一个选项，查看它带来的模拟影响</Text>
       </ScrollView>
     </View>
   )
