@@ -11,6 +11,7 @@ import {
   type Effect,
   type GameStats,
   type NightlyReport,
+  type PostChoicePenalty,
 } from '../../lib/game-data'
 import {
   NICKNAME_MAX_LEN,
@@ -139,27 +140,19 @@ function GameHeader({
   day,
   stats,
   previousStats,
-  event,
   animateStats = false,
   onRules,
 }: {
   day: number
   stats: GameStats
   previousStats?: GameStats
-  event: NonNullable<ReturnType<typeof useGameLoop>['currentEvent']>
   animateStats?: boolean
   onRules: () => void
 }) {
-  const slot = TIME_SLOT_META[event.group]
   return (
     <View className='game-header'>
       <View className='game-header__line'>
-        <View>
-          <Text className='day-label'>第 {day} 天 · {DAY_NAMES[day - 1]}</Text>
-          <Text className='slot-label' style={{ backgroundColor: slot.bg, color: slot.color }}>
-            {slot.emoji} {slot.label} {slot.time}
-          </Text>
-        </View>
+        <Text className='day-label'>第 {day} 天 · {DAY_NAMES[day - 1]}</Text>
         <Button className='rules-button rules-button--inline' onClick={onRules}>规则</Button>
       </View>
       <StatGrid stats={stats} previousStats={previousStats} animateChanges={animateStats} />
@@ -277,6 +270,7 @@ function GameScreen({
   onChoose: (effect: Effect, index: number) => void
   onRules: () => void
 }) {
+  const slot = TIME_SLOT_META[event.group]
   const [dragX, setDragX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [exitDirection, setExitDirection] = useState<'left' | 'right' | null>(null)
@@ -342,11 +336,16 @@ function GameScreen({
 
   return (
     <View className='game paper-bg'>
-      <GameHeader day={day} stats={stats} event={event} onRules={onRules} />
+      <GameHeader day={day} stats={stats} onRules={onRules} />
 
       <ScrollView className='game-body' scrollY>
         <View className='game-body__content'>
-          <View className='event-progress'>情境 {eventIndex} / {queueLength}</View>
+          <View className='scene-meta'>
+            <Text className='slot-label' style={{ backgroundColor: slot.bg, color: slot.color }}>
+              {slot.emoji} {slot.label} · {slot.time}
+            </Text>
+            <Text className='event-progress'>情境 {eventIndex} / {queueLength}</Text>
+          </View>
           <View className='swipe-hints'>
             <View className={`swipe-hint swipe-hint--left ${leftActive ? 'swipe-hint--active' : ''}`}>
               <Text className='swipe-hint__arrow'>←</Text>
@@ -409,6 +408,7 @@ function TipScreen({
   choiceLabel,
   scienceTip,
   effect,
+  penalty,
   onContinue,
   onRules,
 }: {
@@ -419,9 +419,11 @@ function TipScreen({
   choiceLabel: string
   scienceTip: string
   effect: Effect
+  penalty: PostChoicePenalty
   onContinue: () => void
   onRules: () => void
 }) {
+  const slot = TIME_SLOT_META[event.group]
   const changes = STAT_CONFIG.flatMap((item) => {
     const value = effect[item.key]
     return value ? [{ ...item, value }] : []
@@ -433,12 +435,17 @@ function TipScreen({
         day={day}
         stats={stats}
         previousStats={previousStats}
-        event={event}
         animateStats
         onRules={onRules}
       />
       <ScrollView className='game-body game-body--tip' scrollY>
         <View className='game-body__content game-body__content--tip'>
+          <View className='scene-meta scene-meta--tip'>
+            <Text className='slot-label' style={{ backgroundColor: slot.bg, color: slot.color }}>
+              {slot.emoji} {slot.label} · {slot.time}
+            </Text>
+            <Text className='event-progress'>刚刚的情境</Text>
+          </View>
           <View className='tip-card doodle-card tip-card--enter'>
             <View className='tip-card__header'>
               <View className='tip-icon'>!</View>
@@ -461,8 +468,20 @@ function TipScreen({
                 </View>
               ))}
             </View>
+            {penalty.foodComa && (
+              <View className='penalty-box penalty-box--danger'>
+                <Text className='penalty-box__title'>🤢 撑得大脑缺氧！</Text>
+                <Text className='penalty-box__text'>饱腹感溢出，额外扣除：精力 -15、心情 -10</Text>
+              </View>
+            )}
+            {penalty.starvation && (
+              <View className='penalty-box penalty-box--warning'>
+                <Text className='penalty-box__title'>😵 饿得眼冒金星！</Text>
+                <Text className='penalty-box__text'>饱腹感归零，额外扣除：血糖 -10、心情 -10</Text>
+              </View>
+            )}
             <View className='science-box'>
-              <Text className='science-box__title'>💡 科普提示</Text>
+              <Text className='science-box__title'>💡 为什么会这样？</Text>
               <Text className='science-box__text'>{scienceTip}</Text>
             </View>
             <Text className='simulation-note'>以上为游戏化模拟效果，不代表真实个体的血糖变化。</Text>
@@ -665,6 +684,7 @@ export default function IndexPage() {
         choiceLabel={game.pendingTip.choiceLabel}
         scienceTip={game.pendingTip.scienceTip}
         effect={game.pendingTip.effect}
+        penalty={game.pendingTip.penalty}
         onContinue={game.handleDismissTip}
         onRules={() => setShowRules(true)}
       />
