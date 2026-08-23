@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Button, Image, Input, ScrollView, Text, View } from '@tarojs/components'
+import type { BaseEventOrig, ITouchEvent } from '@tarojs/components/types/common'
 import Taro from '@tarojs/taro'
 import { useGameLoop } from '../../hooks/useGameLoop'
 import {
@@ -58,6 +59,18 @@ function getImage(path?: string): string {
   return (path && IMAGE_MAP[path]) || startImage
 }
 
+function PaperTexture() {
+  return (
+    <View className='paper-texture'>
+      <View className='paper-texture__wash paper-texture__wash--one' />
+      <View className='paper-texture__wash paper-texture__wash--two' />
+      <View className='paper-texture__wash paper-texture__wash--three' />
+      <View className='paper-texture__speckles paper-texture__speckles--one' />
+      <View className='paper-texture__speckles paper-texture__speckles--two' />
+    </View>
+  )
+}
+
 function DoodleButton({
   children,
   tone = 'green',
@@ -76,17 +89,38 @@ function DoodleButton({
   )
 }
 
-function StatGrid({ stats }: { stats: GameStats }) {
+function StatGrid({
+  stats,
+  previousStats,
+  animateChanges = false,
+}: {
+  stats: GameStats
+  previousStats?: GameStats
+  animateChanges?: boolean
+}) {
   return (
     <View className='stats-grid'>
       {STAT_CONFIG.map((item) => {
         const value = stats[item.key]
+        const previousValue = previousStats?.[item.key] ?? value
+        const diff = value - previousValue
+        const changed = animateChanges && diff !== 0
+        const isGoodChange = item.key === 'bloodSugar' ? diff < 0 : diff > 0
         return (
-          <View className='stat-card' key={item.key} style={{ backgroundColor: item.bg }}>
+          <View
+            className={`stat-card ${changed ? `stat-card--changed stat-card--${isGoodChange ? 'good' : 'bad'}` : ''}`}
+            key={`${item.key}-${animateChanges ? value : 'steady'}`}
+            style={{ backgroundColor: item.bg }}
+          >
+            {changed && (
+              <Text className={`stat-card__delta stat-card__delta--${isGoodChange ? 'good' : 'bad'}`}>
+                {diff > 0 ? `+${diff}` : diff}
+              </Text>
+            )}
             <View className='stat-card__top'>
               <Text className='stat-card__emoji'>{item.emoji}</Text>
               <Text className='stat-card__label'>{item.label}</Text>
-              <Text className='stat-card__value'>{value}</Text>
+              <Text className={`stat-card__value ${changed ? 'stat-card__value--changed' : ''}`}>{value}</Text>
             </View>
             <View className='stat-bar'>
               <View
@@ -97,6 +131,38 @@ function StatGrid({ stats }: { stats: GameStats }) {
           </View>
         )
       })}
+    </View>
+  )
+}
+
+function GameHeader({
+  day,
+  stats,
+  previousStats,
+  event,
+  animateStats = false,
+  onRules,
+}: {
+  day: number
+  stats: GameStats
+  previousStats?: GameStats
+  event: NonNullable<ReturnType<typeof useGameLoop>['currentEvent']>
+  animateStats?: boolean
+  onRules: () => void
+}) {
+  const slot = TIME_SLOT_META[event.group]
+  return (
+    <View className='game-header'>
+      <View className='game-header__line'>
+        <View>
+          <Text className='day-label'>第 {day} 天 · {DAY_NAMES[day - 1]}</Text>
+          <Text className='slot-label' style={{ backgroundColor: slot.bg, color: slot.color }}>
+            {slot.emoji} {slot.label} {slot.time}
+          </Text>
+        </View>
+        <Button className='rules-button rules-button--inline' onClick={onRules}>规则</Button>
+      </View>
+      <StatGrid stats={stats} previousStats={previousStats} animateChanges={animateStats} />
     </View>
   )
 }
@@ -211,27 +277,104 @@ function GameScreen({
   onChoose: (effect: Effect, index: number) => void
   onRules: () => void
 }) {
-  const slot = TIME_SLOT_META[event.group]
+  const [dragX, setDragX] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const [exitDirection, setExitDirection] = useState<'left' | 'right' | null>(null)
+  const touchStart = useRef({ x: 0, y: 0 })
+  const dragXRef = useRef(0)
+  const chooseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const swipeThreshold = 78
+
+  useEffect(() => () => {
+    if (chooseTimer.current) clearTimeout(chooseTimer.current)
+  }, [])
+
+  const choose = useCallback((index: number) => {
+    if (exitDirection || chooseTimer.current) return
+    const direction = index === 0 ? 'left' : 'right'
+    setExitDirection(direction)
+    void Taro.vibrateShort({ type: 'light' }).catch(() => undefined)
+    chooseTimer.current = setTimeout(() => onChoose(event.choices[index].effect, index), 330)
+  }, [event.choices, exitDirection, onChoose])
+
+  const handleTouchStart = (touchEvent: BaseEventOrig) => {
+    const point = (touchEvent as ITouchEvent).touches[0]
+    if (!point || exitDirection) return
+    touchStart.current = { x: point.pageX, y: point.pageY }
+    setIsDragging(true)
+  }
+
+  const handleTouchMove = (touchEvent: BaseEventOrig) => {
+    const point = (touchEvent as ITouchEvent).touches[0]
+    if (!point || !isDragging || exitDirection) return
+    const deltaX = point.pageX - touchStart.current.x
+    const deltaY = point.pageY - touchStart.current.y
+    if (Math.abs(deltaX) < Math.abs(deltaY) + 8) return
+    const nextDragX = Math.max(-240, Math.min(240, deltaX))
+    dragXRef.current = nextDragX
+    setDragX(nextDragX)
+  }
+
+  const handleTouchEnd = () => {
+    if (!isDragging || exitDirection) return
+    setIsDragging(false)
+    const finalDragX = dragXRef.current
+    if (finalDragX <= -swipeThreshold) {
+      choose(0)
+    } else if (finalDragX >= swipeThreshold) {
+      choose(1)
+    } else {
+      dragXRef.current = 0
+      setDragX(0)
+    }
+  }
+
+  const leftActive = dragX < -30
+  const rightActive = dragX > 30
+  const dragOpacity = Math.max(0.58, 1 - Math.abs(dragX) / 420)
+  const cardClassName = [
+    'event-card',
+    'doodle-card',
+    'event-card--swipeable',
+    isDragging ? 'event-card--dragging' : '',
+    exitDirection ? `event-card--exit-${exitDirection}` : '',
+  ].filter(Boolean).join(' ')
+
   return (
     <View className='game paper-bg'>
-      <View className='game-header'>
-        <View className='game-header__line'>
-          <View>
-            <Text className='day-label'>第 {day} 天 · {DAY_NAMES[day - 1]}</Text>
-            <Text className='slot-label' style={{ backgroundColor: slot.bg, color: slot.color }}>
-              {slot.emoji} {slot.label} {slot.time}
-            </Text>
-          </View>
-          <Button className='rules-button rules-button--inline' onClick={onRules}>规则</Button>
-        </View>
-        <StatGrid stats={stats} />
-      </View>
+      <GameHeader day={day} stats={stats} event={event} onRules={onRules} />
 
       <ScrollView className='game-body' scrollY>
         <View className='game-body__content'>
           <View className='event-progress'>情境 {eventIndex} / {queueLength}</View>
-          <View className='event-card doodle-card'>
-            <Image className='event-card__image' src={getImage(event.image)} mode='aspectFill' />
+          <View className='swipe-hints'>
+            <View className={`swipe-hint swipe-hint--left ${leftActive ? 'swipe-hint--active' : ''}`}>
+              <Text className='swipe-hint__arrow'>←</Text>
+              <Text className='swipe-hint__label'>{event.choices[0].label}</Text>
+            </View>
+            <View className={`swipe-hint swipe-hint--right ${rightActive ? 'swipe-hint--active' : ''}`}>
+              <Text className='swipe-hint__label'>{event.choices[1].label}</Text>
+              <Text className='swipe-hint__arrow'>→</Text>
+            </View>
+          </View>
+          <View
+            className={cardClassName}
+            style={{
+              transform: `translate3d(${dragX}px, 0, 0) rotate(${dragX * 0.035}deg)`,
+              opacity: dragOpacity,
+            }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
+          >
+            <Image
+              className='event-card__image'
+              src={getImage(event.image)}
+              mode='aspectFill'
+              lazyLoad={false}
+              fadeIn={false}
+            />
             <View className='event-card__content'>
               <Text className='event-card__title'>{event.title}</Text>
               <Text className='event-card__description'>{event.description}</Text>
@@ -241,14 +384,17 @@ function GameScreen({
                 <Button
                   className={`choice-button choice-button--${index === 0 ? 'green' : 'yellow'}`}
                   key={`${event.id}-${index}`}
-                  onClick={() => onChoose(choice.effect, index)}
+                  onClick={(clickEvent) => {
+                    clickEvent.stopPropagation()
+                    choose(index)
+                  }}
                 >
                   {choice.label}
                 </Button>
               ))}
             </View>
           </View>
-          <Text className='game-hint'>点击一个选项，查看它带来的模拟影响</Text>
+          <Text className='game-hint'>左右滑动卡片，或点击一个选项</Text>
         </View>
       </ScrollView>
     </View>
@@ -256,17 +402,25 @@ function GameScreen({
 }
 
 function TipScreen({
+  day,
   stats,
+  previousStats,
+  event,
   choiceLabel,
   scienceTip,
   effect,
   onContinue,
+  onRules,
 }: {
+  day: number
   stats: GameStats
+  previousStats: GameStats
+  event: NonNullable<ReturnType<typeof useGameLoop>['currentEvent']>
   choiceLabel: string
   scienceTip: string
   effect: Effect
   onContinue: () => void
+  onRules: () => void
 }) {
   const changes = STAT_CONFIG.flatMap((item) => {
     const value = effect[item.key]
@@ -274,36 +428,49 @@ function TipScreen({
   })
 
   return (
-    <ScrollView className='page-scroll paper-bg' scrollY>
-      <View className='tip-page'>
-        <StatGrid stats={stats} />
-        <View className='tip-card doodle-card'>
-          <View className='tip-card__header'>
-            <View className='tip-icon'>!</View>
-            <View>
-              <Text className='tip-card__eyebrow'>你选择了</Text>
-              <Text className='tip-card__choice'>{choiceLabel}</Text>
-            </View>
-          </View>
-          <View className='change-list'>
-            {changes.map((item) => (
-              <View className='change-pill' key={item.key} style={{ backgroundColor: item.bg }}>
-                <Text>{item.emoji} {item.label}</Text>
-                <Text className={item.value > 0 ? 'change-positive' : 'change-negative'}>
-                  {item.value > 0 ? '+' : ''}{item.value}
-                </Text>
+    <View className='game paper-bg'>
+      <GameHeader
+        day={day}
+        stats={stats}
+        previousStats={previousStats}
+        event={event}
+        animateStats
+        onRules={onRules}
+      />
+      <ScrollView className='game-body game-body--tip' scrollY>
+        <View className='game-body__content game-body__content--tip'>
+          <View className='tip-card doodle-card tip-card--enter'>
+            <View className='tip-card__header'>
+              <View className='tip-icon'>!</View>
+              <View>
+                <Text className='tip-card__eyebrow'>你选择了</Text>
+                <Text className='tip-card__choice'>{choiceLabel}</Text>
               </View>
-            ))}
+            </View>
+            <View className='change-list'>
+              {changes.map((item, index) => (
+                <View
+                  className='change-pill change-pill--enter'
+                  key={item.key}
+                  style={{ backgroundColor: item.bg, animationDelay: `${index * 110}ms` }}
+                >
+                  <Text>{item.emoji} {item.label}</Text>
+                  <Text className={`change-pill__value ${item.value > 0 ? 'change-positive' : 'change-negative'}`}>
+                    {item.value > 0 ? '+' : ''}{item.value}
+                  </Text>
+                </View>
+              ))}
+            </View>
+            <View className='science-box'>
+              <Text className='science-box__title'>💡 科普提示</Text>
+              <Text className='science-box__text'>{scienceTip}</Text>
+            </View>
+            <Text className='simulation-note'>以上为游戏化模拟效果，不代表真实个体的血糖变化。</Text>
+            <DoodleButton onClick={onContinue}>继续</DoodleButton>
           </View>
-          <View className='science-box'>
-            <Text className='science-box__title'>💡 科普提示</Text>
-            <Text className='science-box__text'>{scienceTip}</Text>
-          </View>
-          <Text className='simulation-note'>以上为游戏化模拟效果，不代表真实个体的血糖变化。</Text>
-          <DoodleButton onClick={onContinue}>继续</DoodleButton>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   )
 }
 
@@ -488,14 +655,18 @@ export default function IndexPage() {
         onRules={() => setShowRules(true)}
       />
     )
-  } else if (game.phase === 'tip' && game.pendingTip) {
+  } else if (game.phase === 'tip' && game.pendingTip && game.currentEvent) {
     content = (
       <TipScreen
+        day={game.currentDay}
         stats={game.stats}
+        previousStats={game.prevStats}
+        event={game.currentEvent}
         choiceLabel={game.pendingTip.choiceLabel}
         scienceTip={game.pendingTip.scienceTip}
         effect={game.pendingTip.effect}
         onContinue={game.handleDismissTip}
+        onRules={() => setShowRules(true)}
       />
     )
   } else if (game.phase === 'day-summary') {
@@ -525,6 +696,7 @@ export default function IndexPage() {
 
   return (
     <View className='app-shell'>
+      <PaperTexture />
       {content}
       {showRules && <RulesOverlay onClose={() => setShowRules(false)} />}
     </View>

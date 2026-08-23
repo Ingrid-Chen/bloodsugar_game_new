@@ -12,18 +12,92 @@ $shadow: 10rpx 10rpx 0 rgba(30, 41, 59, 0.95);
 $small-shadow: 6rpx 6rpx 0 rgba(30, 41, 59, 0.95);
 
 page,
-.app-shell,
-.paper-bg {
+.app-shell {
   min-height: 100vh;
-  background: $paper;
+  background: #fff8e8;
   color: $ink;
 }
 
+.app-shell {
+  position: relative;
+  overflow: hidden;
+}
+
 .paper-bg {
-  background-image:
-    radial-gradient(circle at 15% 18%, rgba(245, 197, 66, 0.1) 0, rgba(245, 197, 66, 0.1) 4rpx, transparent 5rpx),
-    radial-gradient(circle at 82% 38%, rgba(90, 154, 110, 0.08) 0, rgba(90, 154, 110, 0.08) 5rpx, transparent 6rpx);
-  background-size: 54rpx 54rpx, 72rpx 72rpx;
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  background: transparent;
+  color: $ink;
+}
+
+.paper-texture {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #fff8e8;
+
+  &__wash {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.32;
+
+    &--one {
+      top: -110rpx;
+      left: -150rpx;
+      width: 520rpx;
+      height: 520rpx;
+      background: #f9dc7b;
+    }
+
+    &--two {
+      top: 38%;
+      right: -220rpx;
+      width: 620rpx;
+      height: 620rpx;
+      background: #fbe8aa;
+    }
+
+    &--three {
+      bottom: -260rpx;
+      left: -120rpx;
+      width: 720rpx;
+      height: 520rpx;
+      background: #f7d978;
+      opacity: 0.2;
+    }
+  }
+
+  &__speckles {
+    position: absolute;
+    width: 5rpx;
+    height: 5rpx;
+    border-radius: 50%;
+    background: rgba(191, 144, 48, 0.16);
+    box-shadow:
+      84rpx 46rpx 0 rgba(191, 144, 48, 0.13),
+      224rpx 96rpx 0 rgba(90, 154, 110, 0.1),
+      392rpx 32rpx 0 rgba(191, 144, 48, 0.11),
+      540rpx 126rpx 0 rgba(232, 130, 74, 0.09),
+      682rpx 60rpx 0 rgba(191, 144, 48, 0.12),
+      118rpx 248rpx 0 rgba(232, 130, 74, 0.09),
+      318rpx 202rpx 0 rgba(191, 144, 48, 0.13),
+      482rpx 284rpx 0 rgba(90, 154, 110, 0.09),
+      640rpx 226rpx 0 rgba(191, 144, 48, 0.1);
+
+    &--one {
+      top: 16rpx;
+      left: 12rpx;
+    }
+
+    &--two {
+      top: 52%;
+      left: 30rpx;
+      transform: rotate(8deg);
+    }
+  }
 }
 
 .page-scroll,
@@ -309,6 +383,7 @@ page,
 }
 
 .stat-card {
+  position: relative;
   box-sizing: border-box;
   min-width: 0;
   padding: 13rpx 14rpx;
@@ -335,6 +410,48 @@ page,
   &__value {
     font-size: 24rpx;
     font-weight: 900;
+
+    &--changed {
+      animation: stat-number-pop 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+  }
+
+  &__delta {
+    position: absolute;
+    top: -20rpx;
+    right: 8rpx;
+    z-index: 4;
+    min-width: 52rpx;
+    padding: 5rpx 9rpx;
+    border: 3rpx solid $ink;
+    border-radius: 99rpx;
+    box-shadow: 3rpx 3rpx 0 $ink;
+    text-align: center;
+    font-size: 22rpx;
+    font-weight: 950;
+    animation: stat-delta-fly 1.55s ease-out both;
+
+    &--good {
+      color: $green-dark;
+      background: #e0f0e4;
+    }
+
+    &--bad {
+      color: #b72f2f;
+      background: #fde8e8;
+    }
+  }
+
+  &--changed {
+    animation: stat-card-pop 0.85s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  &--good {
+    box-shadow: 0 0 0 5rpx rgba(90, 154, 110, 0.2);
+  }
+
+  &--bad {
+    box-shadow: 0 0 0 5rpx rgba(224, 90, 90, 0.2);
   }
 }
 
@@ -350,12 +467,15 @@ page,
   &__fill {
     height: 100%;
     border-radius: inherit;
+    transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
   }
 }
 
 .game {
   box-sizing: border-box;
+  display: flex;
   height: 100vh;
+  flex-direction: column;
   overflow: hidden;
 }
 
@@ -363,6 +483,7 @@ page,
   position: relative;
   z-index: 2;
   box-sizing: border-box;
+  flex: none;
   padding: 24rpx 28rpx 20rpx;
   border-bottom: $border;
   background: rgba(253, 251, 247, 0.97);
@@ -394,10 +515,16 @@ page,
 }
 
 .game-body {
-  height: calc(100vh - 286rpx);
+  min-height: 0;
+  height: auto;
+  flex: 1;
 
   &__content {
     padding: 26rpx 28rpx 60rpx;
+
+    &--tip {
+      padding-top: 30rpx;
+    }
   }
 }
 
@@ -413,12 +540,32 @@ page,
   margin-bottom: 34rpx;
   overflow: hidden;
 
+  &--swipeable {
+    transform-origin: 50% 88%;
+    touch-action: pan-y;
+    transition: transform 0.24s ease-out, opacity 0.24s ease-out;
+    animation: event-card-enter 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  &--dragging {
+    transition: none;
+  }
+
+  &--exit-left {
+    animation: event-card-exit-left 0.34s ease-in both;
+  }
+
+  &--exit-right {
+    animation: event-card-exit-right 0.34s ease-in both;
+  }
+
   &__image {
     display: block;
     width: 100%;
     height: 350rpx;
     border-bottom: $border;
     background: #edf5ee;
+    filter: saturate(1.025) contrast(1.02);
   }
 
   &__content {
@@ -438,6 +585,62 @@ page,
     color: #475569;
     font-size: 27rpx;
     line-height: 1.65;
+  }
+}
+
+.swipe-hints {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.swipe-hint {
+  box-sizing: border-box;
+  display: flex;
+  min-width: 0;
+  height: 62rpx;
+  flex: 1;
+  align-items: center;
+  gap: 8rpx;
+  padding: 0 13rpx;
+  border: 3rpx solid $ink;
+  border-radius: 16rpx;
+  color: #748094;
+  background: rgba(255, 253, 247, 0.9);
+  box-shadow: 4rpx 4rpx 0 $ink;
+  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+
+  &--left {
+    &.swipe-hint--active {
+      transform: scale(1.04) rotate(-1deg);
+      color: $green-dark;
+      background: #e0f0e4;
+    }
+  }
+
+  &--right {
+    justify-content: flex-end;
+
+    &.swipe-hint--active {
+      transform: scale(1.04) rotate(1deg);
+      color: #8a6410;
+      background: #fef0b8;
+    }
+  }
+
+  &__arrow {
+    flex: none;
+    font-size: 30rpx;
+    font-weight: 950;
+  }
+
+  &__label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 20rpx;
+    font-weight: 800;
   }
 }
 
@@ -484,10 +687,6 @@ page,
   padding: 38rpx 30rpx 70rpx;
 }
 
-.tip-page > .stats-grid {
-  margin-bottom: 28rpx;
-}
-
 .tip-card,
 .summary-card,
 .end-card {
@@ -499,6 +698,10 @@ page,
   align-items: center;
   gap: 22rpx;
   margin-bottom: 24rpx;
+}
+
+.tip-card--enter {
+  animation: tip-card-enter 0.48s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 .tip-icon {
@@ -547,6 +750,122 @@ page,
   border-radius: 16rpx;
   font-size: 23rpx;
   font-weight: 800;
+
+  &--enter {
+    opacity: 0;
+    animation: change-pill-enter 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  &__value {
+    min-width: 64rpx;
+    text-align: right;
+    font-size: 30rpx;
+    font-weight: 950;
+  }
+}
+
+@keyframes event-card-enter {
+  0% {
+    transform: translateY(32rpx) scale(0.94) rotate(-1.5deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+@keyframes event-card-exit-left {
+  0% {
+    transform: translateX(0) rotate(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-135%) rotate(-17deg);
+    opacity: 0;
+  }
+}
+
+@keyframes event-card-exit-right {
+  0% {
+    transform: translateX(0) rotate(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(135%) rotate(17deg);
+    opacity: 0;
+  }
+}
+
+@keyframes stat-card-pop {
+  0% {
+    transform: scale(0.92);
+  }
+  45% {
+    transform: scale(1.09);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes stat-number-pop {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.25;
+  }
+  55% {
+    transform: scale(1.42);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes stat-delta-fly {
+  0% {
+    transform: translateY(18rpx) scale(0.55);
+    opacity: 0;
+  }
+  24% {
+    transform: translateY(-4rpx) scale(1.15);
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(-18rpx) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-36rpx) scale(0.92);
+    opacity: 0;
+  }
+}
+
+@keyframes tip-card-enter {
+  0% {
+    transform: translateY(42rpx) scale(0.93) rotate(-1deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+@keyframes change-pill-enter {
+  0% {
+    transform: translateY(24rpx) scale(0.8);
+    opacity: 0;
+  }
+  62% {
+    transform: translateY(-4rpx) scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
 .change-positive {
