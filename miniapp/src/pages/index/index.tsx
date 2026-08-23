@@ -148,7 +148,10 @@ function StatGrid({
             style={{ backgroundColor: item.bg }}
           >
             {changed && (
-              <Text className={`stat-card__delta stat-card__delta--${tone}`}>
+              <Text
+                className='stat-card__delta'
+                style={{ backgroundColor: item.bg, color: item.color }}
+              >
                 {diff > 0 ? `+${diff}` : diff}
               </Text>
             )}
@@ -544,7 +547,7 @@ function ImpactStage({
     const after = stats[item.key]
     const diff = after - before
     if (!diff) return []
-    return [{ ...item, before, after, diff, tone: getChangeTone(item.key, before, after) }]
+    return [{ ...item, before, after, diff }]
   })
 
   const hasCriticalState = stats.bloodSugar >= 80
@@ -561,14 +564,25 @@ function ImpactStage({
       <View className='impact-grid'>
         {changes.map((item, index) => (
           <View
-            className={`impact-card impact-card--${item.tone}`}
+            className='impact-card'
             key={item.key}
-            style={{ animationDelay: `${index * 130}ms` }}
+            style={{
+              animationDelay: `${index * 120}ms`,
+              backgroundColor: item.bg,
+              borderColor: item.color,
+            }}
           >
+            <View className='impact-card__accent' style={{ backgroundColor: item.color }} />
             <Text className='impact-card__emoji'>{item.emoji}</Text>
             <Text className='impact-card__label'>{getImpactLabel(item.key, item.diff)}</Text>
             <Text className='impact-card__stat'>{item.label}</Text>
-            <Text className='impact-card__value'>{item.diff > 0 ? '+' : ''}{item.diff}</Text>
+            <View className='impact-card__value-row'>
+              <Text className='impact-card__direction' style={{ color: item.color }}>
+                {item.diff > 0 ? '↑' : '↓'}
+              </Text>
+              <Text className='impact-card__value'>{item.diff > 0 ? '+' : ''}{item.diff}</Text>
+            </View>
+            <Text className='impact-card__before-after'>{item.before} → {item.after}</Text>
           </View>
         ))}
       </View>
@@ -585,6 +599,10 @@ function ImpactStage({
         <View className='impact-stage__bridge'>
           <Text className='impact-stage__bridge-text'>数值是结果，原因才能帮你做下一次选择。</Text>
           <DoodleButton tone='yellow' onClick={onExplain}>看看为什么会这样 →</DoodleButton>
+          <View className='impact-stage__auto'>
+            <View className='impact-stage__auto-fill' />
+          </View>
+          <Text className='impact-stage__auto-text'>即将自动展开解释</Text>
         </View>
       ) : (
         <View className='impact-stage__loading'>
@@ -626,20 +644,24 @@ function TipScreen({
   const [canExplain, setCanExplain] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
   const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const transitionStarted = useRef(false)
 
-  useEffect(() => {
-    const revealTimer = setTimeout(() => setCanExplain(true), 1800)
-    return () => {
-      clearTimeout(revealTimer)
-      if (transitionTimer.current) clearTimeout(transitionTimer.current)
-    }
-  }, [])
-
-  const revealExplanation = () => {
-    if (!canExplain || transitioning) return
+  const revealExplanation = useCallback(() => {
+    if (transitionStarted.current) return
+    transitionStarted.current = true
     setTransitioning(true)
     transitionTimer.current = setTimeout(() => setShowExplanation(true), 420)
-  }
+  }, [])
+
+  useEffect(() => {
+    const revealTimer = setTimeout(() => setCanExplain(true), 1600)
+    const autoTimer = setTimeout(revealExplanation, 4200)
+    return () => {
+      clearTimeout(revealTimer)
+      clearTimeout(autoTimer)
+      if (transitionTimer.current) clearTimeout(transitionTimer.current)
+    }
+  }, [revealExplanation])
 
   const changes = STAT_CONFIG.flatMap((item) => {
     const value = stats[item.key] - previousStats[item.key]
