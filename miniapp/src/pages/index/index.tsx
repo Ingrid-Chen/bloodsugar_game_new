@@ -18,6 +18,8 @@ import {
   clearSave,
   getNickname,
   getSave,
+  hasSeenIntro,
+  markIntroSeen,
   setNickname as cacheNickname,
   setSave,
 } from '../../lib/storage'
@@ -58,6 +60,38 @@ const IMAGE_MAP: Record<string, string> = {
 
 function getImage(path?: string): string {
   return (path && IMAGE_MAP[path]) || startImage
+}
+
+type ChangeTone = 'good' | 'bad' | 'neutral'
+
+function distanceToRange(value: number, min: number, max: number): number {
+  if (value < min) return min - value
+  if (value > max) return value - max
+  return 0
+}
+
+function getStatDistance(key: keyof GameStats, value: number): number {
+  if (key === 'bloodSugar') return distanceToRange(value, 40, 60)
+  if (key === 'satiety') return distanceToRange(value, 40, 75)
+  return Math.max(0, 50 - value)
+}
+
+function getChangeTone(key: keyof GameStats, before: number, after: number): ChangeTone {
+  const beforeDistance = getStatDistance(key, before)
+  const afterDistance = getStatDistance(key, after)
+  if (afterDistance < beforeDistance) return 'good'
+  if (afterDistance > beforeDistance) return 'bad'
+  return 'neutral'
+}
+
+function getImpactLabel(key: keyof GameStats, diff: number): string {
+  const labels: Record<keyof GameStats, [string, string]> = {
+    bloodSugar: ['明显回落', '快速上升'],
+    mood: ['心情受挫', '心情上扬'],
+    energy: ['精力下降', '精力提升'],
+    satiety: ['饥饿感增加', '更有饱腹感'],
+  }
+  return diff < 0 ? labels[key][0] : labels[key][1]
 }
 
 function PaperTexture() {
@@ -106,15 +140,15 @@ function StatGrid({
         const previousValue = previousStats?.[item.key] ?? value
         const diff = value - previousValue
         const changed = animateChanges && diff !== 0
-        const isGoodChange = item.key === 'bloodSugar' ? diff < 0 : diff > 0
+        const tone = getChangeTone(item.key, previousValue, value)
         return (
           <View
-            className={`stat-card ${changed ? `stat-card--changed stat-card--${isGoodChange ? 'good' : 'bad'}` : ''}`}
+            className={`stat-card ${changed ? `stat-card--changed stat-card--${tone}` : ''}`}
             key={`${item.key}-${animateChanges ? value : 'steady'}`}
             style={{ backgroundColor: item.bg }}
           >
             {changed && (
-              <Text className={`stat-card__delta stat-card__delta--${isGoodChange ? 'good' : 'bad'}`}>
+              <Text className={`stat-card__delta stat-card__delta--${tone}`}>
                 {diff > 0 ? `+${diff}` : diff}
               </Text>
             )}
@@ -133,6 +167,41 @@ function StatGrid({
         )
       })}
     </View>
+  )
+}
+
+function OnboardingScreen({ onContinue }: { onContinue: () => void }) {
+  return (
+    <ScrollView className='page-scroll paper-bg' scrollY>
+      <View className='onboarding'>
+        <View className='onboarding__kicker'>先从你的一天开始</View>
+        <Text className='onboarding__title'>你也经历过这些吗？</Text>
+        <View className='onboarding__moments'>
+          <View className='moment-chip moment-chip--green'>
+            <Text className='moment-chip__emoji'>🥱</Text>
+            <Text>午饭后困得睁不开眼</Text>
+          </View>
+          <View className='moment-chip moment-chip--yellow'>
+            <Text className='moment-chip__emoji'>🥤</Text>
+            <Text>下午突然很馋</Text>
+          </View>
+          <View className='moment-chip moment-chip--orange'>
+            <Text className='moment-chip__emoji'>🍞</Text>
+            <Text>明明吃过，却很快又饿</Text>
+          </View>
+        </View>
+        <View className='onboarding__story doodle-card'>
+          <Text className='onboarding__lead'>这些感受的原因不只一个。</Text>
+          <Text className='onboarding__body'>血糖变化，是理解身体如何处理一顿饭的一扇窗口。早餐、奶茶、加班餐、饭后活动——一次选择未必说明什么，但每天重复的模式，值得你早点看懂。</Text>
+        </View>
+        <View className='onboarding__mission'>
+          <Text className='onboarding__mission-badge'>7 天生活模拟</Text>
+          <Text className='onboarding__mission-text'>做选择，看反馈，找到更稳的日常节奏。</Text>
+        </View>
+        <Text className='onboarding__note'>这不是健康测试，也不要求你监测血糖。</Text>
+        <DoodleButton onClick={onContinue}>开始看看我的一天</DoodleButton>
+      </View>
+    </ScrollView>
   )
 }
 
@@ -271,6 +340,7 @@ function GameScreen({
   onRules: () => void
 }) {
   const slot = TIME_SLOT_META[event.group]
+  const isFirstScenario = day === 1 && eventIndex === 1
   const [dragX, setDragX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [exitDirection, setExitDirection] = useState<'left' | 'right' | null>(null)
@@ -287,7 +357,7 @@ function GameScreen({
     if (exitDirection || chooseTimer.current) return
     const direction = index === 0 ? 'left' : 'right'
     setExitDirection(direction)
-    void Taro.vibrateShort({ type: 'light' }).catch(() => undefined)
+    void Taro.vibrateShort({ type: 'medium' }).catch(() => undefined)
     chooseTimer.current = setTimeout(() => onChoose(event.choices[index].effect, index), 330)
   }, [event.choices, exitDirection, onChoose])
 
@@ -346,6 +416,22 @@ function GameScreen({
             </Text>
             <Text className='event-progress'>情境 {eventIndex} / {queueLength}</Text>
           </View>
+          {isFirstScenario && (
+            <View className='gesture-guide'>
+              <View className='gesture-guide__copy'>
+                <Text className='gesture-guide__badge'>第 1 步</Text>
+                <View>
+                  <Text className='gesture-guide__title'>试着左右滑动卡片</Text>
+                  <Text className='gesture-guide__subtitle'>向左选左边 · 向右选右边</Text>
+                </View>
+              </View>
+              <View className='gesture-guide__track'>
+                <Text className='gesture-guide__arrow'>←</Text>
+                <Text className='gesture-guide__hand'>☝️</Text>
+                <Text className='gesture-guide__arrow'>→</Text>
+              </View>
+            </View>
+          )}
           <View className='swipe-hints'>
             <View className={`swipe-hint swipe-hint--left ${leftActive ? 'swipe-hint--active' : ''}`}>
               <Text className='swipe-hint__arrow'>←</Text>
@@ -393,9 +479,60 @@ function GameScreen({
               ))}
             </View>
           </View>
-          <Text className='game-hint'>左右滑动卡片，或点击一个选项</Text>
+          <Text className='game-hint'>{isFirstScenario ? '也可以直接点击一个选项' : '左右滑动卡片，或点击一个选项'}</Text>
         </View>
       </ScrollView>
+    </View>
+  )
+}
+
+function ImpactStage({ stats, previousStats }: { stats: GameStats; previousStats: GameStats }) {
+  const changes = STAT_CONFIG.flatMap((item) => {
+    const before = previousStats[item.key]
+    const after = stats[item.key]
+    const diff = after - before
+    if (!diff) return []
+    return [{ ...item, before, after, diff, tone: getChangeTone(item.key, before, after) }]
+  })
+
+  const hasCriticalState = stats.bloodSugar >= 80
+    || stats.bloodSugar < 40
+    || stats.satiety >= 90
+    || stats.satiety <= 20
+    || stats.energy <= 20
+    || stats.mood <= 20
+
+  return (
+    <View className='impact-stage'>
+      <Text className='impact-stage__eyebrow'>选择已生效</Text>
+      <Text className='impact-stage__title'>这一选，身体状态变了</Text>
+      <View className='impact-grid'>
+        {changes.map((item, index) => (
+          <View
+            className={`impact-card impact-card--${item.tone}`}
+            key={item.key}
+            style={{ animationDelay: `${index * 130}ms` }}
+          >
+            <Text className='impact-card__emoji'>{item.emoji}</Text>
+            <Text className='impact-card__label'>{getImpactLabel(item.key, item.diff)}</Text>
+            <Text className='impact-card__stat'>{item.label}</Text>
+            <Text className='impact-card__value'>{item.diff > 0 ? '+' : ''}{item.diff}</Text>
+          </View>
+        ))}
+      </View>
+      {hasCriticalState && (
+        <View className='impact-alert'>
+          <Text className='impact-alert__icon'>!</Text>
+          <View>
+            <Text className='impact-alert__title'>状态进入警戒区</Text>
+            <Text className='impact-alert__text'>留意顶部数值，接下来的选择要更谨慎。</Text>
+          </View>
+        </View>
+      )}
+      <View className='impact-stage__loading'>
+        <View />
+        <Text>正在解读这次选择…</Text>
+      </View>
     </View>
   )
 }
@@ -407,10 +544,10 @@ function TipScreen({
   event,
   choiceLabel,
   scienceTip,
-  effect,
   penalty,
   onContinue,
   onRules,
+  showLearningGoal,
 }: {
   day: number
   stats: GameStats
@@ -418,14 +555,21 @@ function TipScreen({
   event: NonNullable<ReturnType<typeof useGameLoop>['currentEvent']>
   choiceLabel: string
   scienceTip: string
-  effect: Effect
   penalty: PostChoicePenalty
   onContinue: () => void
   onRules: () => void
+  showLearningGoal: boolean
 }) {
   const slot = TIME_SLOT_META[event.group]
+  const [showExplanation, setShowExplanation] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowExplanation(true), 1500)
+    return () => clearTimeout(timer)
+  }, [])
+
   const changes = STAT_CONFIG.flatMap((item) => {
-    const value = effect[item.key]
+    const value = stats[item.key] - previousStats[item.key]
     return value ? [{ ...item, value }] : []
   })
 
@@ -446,7 +590,9 @@ function TipScreen({
             </Text>
             <Text className='event-progress'>刚刚的情境</Text>
           </View>
-          <View className='tip-card doodle-card tip-card--enter'>
+          {!showExplanation ? (
+            <ImpactStage stats={stats} previousStats={previousStats} />
+          ) : <View className='tip-card doodle-card tip-card--enter'>
             <View className='tip-card__header'>
               <View className='tip-icon'>!</View>
               <View>
@@ -484,9 +630,16 @@ function TipScreen({
               <Text className='science-box__title'>💡 为什么会这样？</Text>
               <Text className='science-box__text'>{scienceTip}</Text>
             </View>
+            {showLearningGoal && (
+              <View className='learning-goal'>
+                <Text className='learning-goal__badge'>你已经抓住核心</Text>
+                <Text className='learning-goal__title'>控糖，不是把血糖压得越低越好</Text>
+                <Text className='learning-goal__text'>也不是戒掉所有碳水。目标是尽量减少大起大落，同时兼顾精力、心情和饱腹。</Text>
+              </View>
+            )}
             <Text className='simulation-note'>以上为游戏化模拟效果，不代表真实个体的血糖变化。</Text>
             <DoodleButton onClick={onContinue}>继续</DoodleButton>
-          </View>
+          </View>}
         </View>
       </ScrollView>
     </View>
@@ -587,6 +740,7 @@ export default function IndexPage() {
   const game = useGameLoop()
   const [nickname, setNickname] = useState('')
   const [showHome, setShowHome] = useState(true)
+  const [showIntro, setShowIntro] = useState(false)
   const [showRules, setShowRules] = useState(false)
   const [hasSave, setHasSave] = useState(false)
 
@@ -596,10 +750,10 @@ export default function IndexPage() {
   }, [])
 
   useEffect(() => {
-    if (showHome || game.phase === 'start' || !nickname.trim()) return
+    if (showHome || showIntro || game.phase === 'start' || !nickname.trim()) return
     setSave({ nickname: nickname.trim(), ...game.saveState() })
     setHasSave(true)
-  }, [showHome, nickname, game.phase, game.stats, game.currentDay, game.eventIndexInDay, game.saveState])
+  }, [showHome, showIntro, nickname, game.phase, game.stats, game.currentDay, game.eventIndexInDay, game.saveState])
 
   const queueLength = useMemo(() => game.dayQueue.filter(Boolean).length, [game.dayQueue])
   const visibleEventIndex = useMemo(
@@ -623,6 +777,7 @@ export default function IndexPage() {
     clearSave()
     game.handleStart()
     setShowHome(false)
+    setShowIntro(!hasSeenIntro())
   }
 
   const resume = () => {
@@ -635,6 +790,7 @@ export default function IndexPage() {
     cacheNickname(saved.nickname)
     game.restoreSave(saved)
     setShowHome(false)
+    setShowIntro(false)
   }
 
   const restart = () => {
@@ -642,12 +798,19 @@ export default function IndexPage() {
     clearSave()
     game.restart()
     setShowHome(false)
+    setShowIntro(false)
   }
 
   const goHome = () => {
     clearSave()
     setHasSave(false)
+    setShowIntro(false)
     setShowHome(true)
+  }
+
+  const finishIntro = () => {
+    markIntroSeen()
+    setShowIntro(false)
   }
 
   let content: ReactNode
@@ -662,6 +825,8 @@ export default function IndexPage() {
         onRules={() => setShowRules(true)}
       />
     )
+  } else if (showIntro) {
+    content = <OnboardingScreen onContinue={finishIntro} />
   } else if (game.phase === 'playing' && game.currentEvent) {
     content = (
       <GameScreen
@@ -683,10 +848,10 @@ export default function IndexPage() {
         event={game.currentEvent}
         choiceLabel={game.pendingTip.choiceLabel}
         scienceTip={game.pendingTip.scienceTip}
-        effect={game.pendingTip.effect}
         penalty={game.pendingTip.penalty}
         onContinue={game.handleDismissTip}
         onRules={() => setShowRules(true)}
+        showLearningGoal={game.currentDay === 1 && visibleEventIndex === 1}
       />
     )
   } else if (game.phase === 'day-summary') {

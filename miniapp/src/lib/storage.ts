@@ -5,6 +5,7 @@ export const NICKNAME_MAX_LEN = 8
 
 const NICKNAME_KEY = 'bloodsugar:nickname'
 const SAVE_KEY = 'bloodsugar:save:v1'
+const INTRO_SEEN_KEY = 'bloodsugar:intro-seen:v1'
 
 export interface SaveData {
   nickname: string
@@ -62,5 +63,21 @@ export function clearSave(): void {
     Taro.removeStorageSync(SAVE_KEY)
   } catch {
     // 无存档或本地存储不可用时无需处理。
+  }
+}
+
+export function hasSeenIntro(): boolean {
+  try {
+    return Boolean(Taro.getStorageSync(INTRO_SEEN_KEY))
+  } catch {
+    return false
+  }
+}
+
+export function markIntroSeen(): void {
+  try {
+    Taro.setStorageSync(INTRO_SEEN_KEY, true)
+  } catch {
+    // 引导状态无法保存时，不影响开始游戏。
   }
 }
