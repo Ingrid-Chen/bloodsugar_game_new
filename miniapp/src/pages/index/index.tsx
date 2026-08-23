@@ -211,20 +211,57 @@ function GameHeader({
   previousStats,
   animateStats = false,
   onRules,
+  onMenu,
 }: {
   day: number
   stats: GameStats
   previousStats?: GameStats
   animateStats?: boolean
   onRules: () => void
+  onMenu: () => void
 }) {
   return (
     <View className='game-header'>
       <View className='game-header__line'>
         <Text className='day-label'>第 {day} 天 · {DAY_NAMES[day - 1]}</Text>
-        <Button className='rules-button rules-button--inline' onClick={onRules}>规则</Button>
+        <View className='header-actions'>
+          <Button className='rules-button rules-button--inline' onClick={onRules}>规则</Button>
+          <Button className='rules-button rules-button--inline menu-button' onClick={onMenu}>菜单</Button>
+        </View>
       </View>
       <StatGrid stats={stats} previousStats={previousStats} animateChanges={animateStats} />
+    </View>
+  )
+}
+
+function GameMenuOverlay({
+  onClose,
+  onIntro,
+  onHome,
+  onRestart,
+  onEnd,
+}: {
+  onClose: () => void
+  onIntro: () => void
+  onHome: () => void
+  onRestart: () => void
+  onEnd: () => void
+}) {
+  return (
+    <View className='overlay'>
+      <View className='overlay__mask' onClick={onClose} />
+      <View className='game-menu doodle-card'>
+        <View className='game-menu__handle' />
+        <Text className='game-menu__title'>游戏菜单</Text>
+        <Text className='game-menu__subtitle'>想换个操作？当前进度会按照你的选择保存。</Text>
+        <View className='game-menu__actions'>
+          <DoodleButton onClick={onClose}>继续游戏</DoodleButton>
+          <DoodleButton tone='yellow' onClick={onIntro}>查看新手引导</DoodleButton>
+          <DoodleButton tone='cream' onClick={onHome}>返回首页 · 保留进度</DoodleButton>
+          <DoodleButton tone='cream' onClick={onRestart}>重新开始本局</DoodleButton>
+          <Button className='game-menu__end' onClick={onEnd}>结束本局并清除进度</Button>
+        </View>
+      </View>
     </View>
   )
 }
@@ -330,6 +367,7 @@ function GameScreen({
   queueLength,
   onChoose,
   onRules,
+  onMenu,
 }: {
   day: number
   stats: GameStats
@@ -338,6 +376,7 @@ function GameScreen({
   queueLength: number
   onChoose: (effect: Effect, index: number) => void
   onRules: () => void
+  onMenu: () => void
 }) {
   const slot = TIME_SLOT_META[event.group]
   const isFirstScenario = day === 1 && eventIndex === 1
@@ -406,11 +445,12 @@ function GameScreen({
 
   return (
     <View className='game paper-bg'>
-      <GameHeader day={day} stats={stats} onRules={onRules} />
+      <GameHeader day={day} stats={stats} onRules={onRules} onMenu={onMenu} />
 
       <ScrollView className='game-body' scrollY>
         <View className='game-body__content'>
           <View className='scene-meta'>
+            <Text className='scene-meta__eyebrow'>当前场景</Text>
             <Text className='slot-label' style={{ backgroundColor: slot.bg, color: slot.color }}>
               {slot.emoji} {slot.label} · {slot.time}
             </Text>
@@ -486,7 +526,19 @@ function GameScreen({
   )
 }
 
-function ImpactStage({ stats, previousStats }: { stats: GameStats; previousStats: GameStats }) {
+function ImpactStage({
+  stats,
+  previousStats,
+  canExplain,
+  transitioning,
+  onExplain,
+}: {
+  stats: GameStats
+  previousStats: GameStats
+  canExplain: boolean
+  transitioning: boolean
+  onExplain: () => void
+}) {
   const changes = STAT_CONFIG.flatMap((item) => {
     const before = previousStats[item.key]
     const after = stats[item.key]
@@ -503,7 +555,7 @@ function ImpactStage({ stats, previousStats }: { stats: GameStats; previousStats
     || stats.mood <= 20
 
   return (
-    <View className='impact-stage'>
+    <View className={`impact-stage ${transitioning ? 'impact-stage--leaving' : ''}`}>
       <Text className='impact-stage__eyebrow'>选择已生效</Text>
       <Text className='impact-stage__title'>这一选，身体状态变了</Text>
       <View className='impact-grid'>
@@ -529,10 +581,17 @@ function ImpactStage({ stats, previousStats }: { stats: GameStats; previousStats
           </View>
         </View>
       )}
-      <View className='impact-stage__loading'>
-        <View />
-        <Text>正在解读这次选择…</Text>
-      </View>
+      {canExplain ? (
+        <View className='impact-stage__bridge'>
+          <Text className='impact-stage__bridge-text'>数值是结果，原因才能帮你做下一次选择。</Text>
+          <DoodleButton tone='yellow' onClick={onExplain}>看看为什么会这样 →</DoodleButton>
+        </View>
+      ) : (
+        <View className='impact-stage__loading'>
+          <View />
+          <Text>先看清这次变化…</Text>
+        </View>
+      )}
     </View>
   )
 }
@@ -547,6 +606,7 @@ function TipScreen({
   penalty,
   onContinue,
   onRules,
+  onMenu,
   showLearningGoal,
 }: {
   day: number
@@ -558,15 +618,28 @@ function TipScreen({
   penalty: PostChoicePenalty
   onContinue: () => void
   onRules: () => void
+  onMenu: () => void
   showLearningGoal: boolean
 }) {
   const slot = TIME_SLOT_META[event.group]
   const [showExplanation, setShowExplanation] = useState(false)
+  const [canExplain, setCanExplain] = useState(false)
+  const [transitioning, setTransitioning] = useState(false)
+  const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowExplanation(true), 1500)
-    return () => clearTimeout(timer)
+    const revealTimer = setTimeout(() => setCanExplain(true), 1800)
+    return () => {
+      clearTimeout(revealTimer)
+      if (transitionTimer.current) clearTimeout(transitionTimer.current)
+    }
   }, [])
+
+  const revealExplanation = () => {
+    if (!canExplain || transitioning) return
+    setTransitioning(true)
+    transitionTimer.current = setTimeout(() => setShowExplanation(true), 420)
+  }
 
   const changes = STAT_CONFIG.flatMap((item) => {
     const value = stats[item.key] - previousStats[item.key]
@@ -581,17 +654,25 @@ function TipScreen({
         previousStats={previousStats}
         animateStats
         onRules={onRules}
+        onMenu={onMenu}
       />
       <ScrollView className='game-body game-body--tip' scrollY>
         <View className='game-body__content game-body__content--tip'>
           <View className='scene-meta scene-meta--tip'>
+            <Text className='scene-meta__eyebrow'>刚刚的场景</Text>
             <Text className='slot-label' style={{ backgroundColor: slot.bg, color: slot.color }}>
               {slot.emoji} {slot.label} · {slot.time}
             </Text>
             <Text className='event-progress'>刚刚的情境</Text>
           </View>
           {!showExplanation ? (
-            <ImpactStage stats={stats} previousStats={previousStats} />
+            <ImpactStage
+              stats={stats}
+              previousStats={previousStats}
+              canExplain={canExplain}
+              transitioning={transitioning}
+              onExplain={revealExplanation}
+            />
           ) : <View className='tip-card doodle-card tip-card--enter'>
             <View className='tip-card__header'>
               <View className='tip-icon'>!</View>
@@ -652,12 +733,14 @@ function DaySummaryScreen({
   report,
   totalDays,
   onContinue,
+  onHome,
 }: {
   day: number
   stats: GameStats
   report: NightlyReport | null
   totalDays: number
   onContinue: () => void
+  onHome: () => void
 }) {
   return (
     <ScrollView className='page-scroll paper-bg' scrollY>
@@ -679,6 +762,7 @@ function DaySummaryScreen({
           <DoodleButton tone={day >= totalDays ? 'yellow' : 'green'} onClick={onContinue}>
             {day >= totalDays ? '查看最终战报' : `进入第 ${day + 1} 天`}
           </DoodleButton>
+          <DoodleButton tone='cream' onClick={onHome}>返回首页 · 保留进度</DoodleButton>
         </View>
       </View>
     </ScrollView>
@@ -742,6 +826,7 @@ export default function IndexPage() {
   const [showHome, setShowHome] = useState(true)
   const [showIntro, setShowIntro] = useState(false)
   const [showRules, setShowRules] = useState(false)
+  const [showGameMenu, setShowGameMenu] = useState(false)
   const [hasSave, setHasSave] = useState(false)
 
   useEffect(() => {
@@ -801,11 +886,47 @@ export default function IndexPage() {
     setShowIntro(false)
   }
 
-  const goHome = () => {
+  const endAndGoHome = () => {
     clearSave()
     setHasSave(false)
     setShowIntro(false)
+    setShowGameMenu(false)
     setShowHome(true)
+  }
+
+  const returnHome = () => {
+    if (nickname.trim() && game.phase !== 'start') {
+      setSave({ nickname: nickname.trim(), ...game.saveState() })
+      setHasSave(true)
+    }
+    setShowGameMenu(false)
+    setShowHome(true)
+  }
+
+  const confirmRestart = async () => {
+    const result = await Taro.showModal({
+      title: '重新开始本局？',
+      content: '当前进度会被清除，从第 1 天重新开始。',
+      confirmText: '重新开始',
+    })
+    if (!result.confirm) return
+    setShowGameMenu(false)
+    restart()
+  }
+
+  const confirmEnd = async () => {
+    const result = await Taro.showModal({
+      title: '结束当前游戏？',
+      content: '当前进度会被清除。如果只是想暂时离开，请选择「返回首页 · 保留进度」。',
+      confirmText: '结束本局',
+      confirmColor: '#e05a5a',
+    })
+    if (result.confirm) endAndGoHome()
+  }
+
+  const openIntroFromMenu = () => {
+    setShowGameMenu(false)
+    setShowIntro(true)
   }
 
   const finishIntro = () => {
@@ -837,6 +958,7 @@ export default function IndexPage() {
         queueLength={queueLength}
         onChoose={game.handleChoose}
         onRules={() => setShowRules(true)}
+        onMenu={() => setShowGameMenu(true)}
       />
     )
   } else if (game.phase === 'tip' && game.pendingTip && game.currentEvent) {
@@ -851,6 +973,7 @@ export default function IndexPage() {
         penalty={game.pendingTip.penalty}
         onContinue={game.handleDismissTip}
         onRules={() => setShowRules(true)}
+        onMenu={() => setShowGameMenu(true)}
         showLearningGoal={game.currentDay === 1 && visibleEventIndex === 1}
       />
     )
@@ -862,6 +985,7 @@ export default function IndexPage() {
         report={game.nightlyReport}
         totalDays={game.TOTAL_DAYS}
         onContinue={game.handleDaySummaryDone}
+        onHome={returnHome}
       />
     )
   } else if (game.phase === 'victory' || game.phase === 'gameover') {
@@ -872,7 +996,7 @@ export default function IndexPage() {
         reason={game.gameOverReason}
         trackers={game.trackers}
         onRestart={restart}
-        onHome={goHome}
+        onHome={endAndGoHome}
       />
     )
   } else {
@@ -884,6 +1008,15 @@ export default function IndexPage() {
       <PaperTexture />
       {content}
       {showRules && <RulesOverlay onClose={() => setShowRules(false)} />}
+      {showGameMenu && (
+        <GameMenuOverlay
+          onClose={() => setShowGameMenu(false)}
+          onIntro={openIntroFromMenu}
+          onHome={returnHome}
+          onRestart={confirmRestart}
+          onEnd={confirmEnd}
+        />
+      )}
     </View>
   )
 }
