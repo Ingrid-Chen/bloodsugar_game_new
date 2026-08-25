@@ -9,8 +9,8 @@ interface RecapScreenProps {
 }
 
 const DEATH_LABELS: Record<string, string> = {
-  bloodSugarHigh: "高渗昏迷（血糖爆表）",
-  bloodSugarLow: "低血糖休克",
+  bloodSugarHigh: "高糖危机（状态失控）",
+  bloodSugarLow: "低糖危机",
   moodZero: "精神崩溃",
   energyZero: "过劳晕倒",
 }

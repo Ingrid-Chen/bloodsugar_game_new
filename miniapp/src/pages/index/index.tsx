@@ -719,13 +719,13 @@ function TipScreen({
             </View>
             {penalty.foodComa && (
               <View className='penalty-box penalty-box--danger'>
-                <Text className='penalty-box__title'>🤢 撑得大脑缺氧！</Text>
+                <Text className='penalty-box__title'>🤢 吃撑了！胃部负担拉满</Text>
                 <Text className='penalty-box__text'>饱腹感溢出，额外扣除：精力 -15、心情 -10</Text>
               </View>
             )}
             {penalty.starvation && (
               <View className='penalty-box penalty-box--warning'>
-                <Text className='penalty-box__title'>😵 饿得眼冒金星！</Text>
+                <Text className='penalty-box__title'>😵 饿过头，状态开始失控！</Text>
                 <Text className='penalty-box__text'>饱腹感归零，额外扣除：血糖 -10、心情 -10</Text>
               </View>
             )}

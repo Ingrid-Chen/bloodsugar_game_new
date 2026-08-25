@@ -86,14 +86,14 @@ export function InlineTipCard({ choiceLabel, scienceTip, effect, penalty, onCont
 
         {penalty.foodComa && (
           <div className="mx-4 mt-3 px-3 py-2 rounded-xl border-2 border-[#e05a5a] bg-[#fde8e8] shadow-[2px_2px_0px_0px_#e05a5a]">
-            <p className="text-xs font-black text-[#e05a5a] mb-0.5">{"🤢 撑得大脑缺氧！"}</p>
+            <p className="text-xs font-black text-[#e05a5a] mb-0.5">{"🤢 吃撑了！胃部负担拉满"}</p>
             <p className="text-[11px] text-slate-600 leading-relaxed">{"饱腹感溢出! 额外扣除: 精力 -15, 心情 -10"}</p>
           </div>
         )}
 
         {penalty.starvation && (
           <div className="mx-4 mt-3 px-3 py-2 rounded-xl border-2 border-[#e8824a] bg-[#fdecd8] shadow-[2px_2px_0px_0px_#e8824a]">
-            <p className="text-xs font-black text-[#e8824a] mb-0.5">{"😵 饿得眼冒金星！"}</p>
+            <p className="text-xs font-black text-[#e8824a] mb-0.5">{"😵 饿过头，状态开始失控！"}</p>
             <p className="text-[11px] text-slate-600 leading-relaxed">{"饱腹归零! 额外扣除: 血糖 -10, 心情 -10"}</p>
           </div>
         )}
