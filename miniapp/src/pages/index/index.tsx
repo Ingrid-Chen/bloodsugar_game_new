@@ -10,7 +10,6 @@ import {
   TIME_SLOT_META,
   type Effect,
   type GameStats,
-  type NightlyReport,
   type PostChoicePenalty,
 } from '../../lib/game-data'
 import {
@@ -82,16 +81,6 @@ function getChangeTone(key: keyof GameStats, before: number, after: number): Cha
   if (afterDistance < beforeDistance) return 'good'
   if (afterDistance > beforeDistance) return 'bad'
   return 'neutral'
-}
-
-function getImpactLabel(key: keyof GameStats, diff: number): string {
-  const labels: Record<keyof GameStats, [string, string]> = {
-    bloodSugar: ['明显回落', '快速上升'],
-    mood: ['心情受挫', '心情上扬'],
-    energy: ['精力下降', '精力提升'],
-    satiety: ['饥饿感增加', '更有饱腹感'],
-  }
-  return diff < 0 ? labels[key][0] : labels[key][1]
 }
 
 function PaperTexture() {
@@ -198,8 +187,11 @@ function OnboardingScreen({ onContinue }: { onContinue: () => void }) {
           <Text className='onboarding__body'>血糖变化，是理解身体如何处理一顿饭的一扇窗口。早餐、奶茶、加班餐、饭后活动——一次选择未必说明什么，但每天重复的模式，值得你早点看懂。</Text>
         </View>
         <View className='onboarding__mission'>
-          <Text className='onboarding__mission-badge'>7 天生活模拟</Text>
-          <Text className='onboarding__mission-text'>做选择，看反馈，找到更稳的日常节奏。</Text>
+          <Text className='onboarding__mission-badge'>这次挑战</Text>
+          <View className='onboarding__mission-copy'>
+            <Text className='onboarding__mission-title'>不是把血糖压得越低越好，也不是戒掉所有碳水</Text>
+            <Text className='onboarding__mission-text'>做选择、看反馈，找到兼顾精力、心情和饱腹的稳定节奏。</Text>
+          </View>
         </View>
         <Text className='onboarding__note'>这不是健康测试，也不要求你监测血糖。</Text>
         <DoodleButton onClick={onContinue}>开始看看我的一天</DoodleButton>
@@ -452,13 +444,6 @@ function GameScreen({
 
       <ScrollView className='game-body' scrollY>
         <View className='game-body__content'>
-          <View className='scene-meta'>
-            <Text className='scene-meta__eyebrow'>当前场景</Text>
-            <Text className='slot-label' style={{ backgroundColor: slot.bg, color: slot.color }}>
-              {slot.emoji} {slot.label} · {slot.time}
-            </Text>
-            <Text className='event-progress'>情境 {eventIndex} / {queueLength}</Text>
-          </View>
           {isFirstScenario && (
             <View className='gesture-guide'>
               <View className='gesture-guide__copy'>
@@ -496,6 +481,19 @@ function GameScreen({
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
           >
+            <View className='event-card__content'>
+              <View className='event-card__context'>
+                <Text
+                  className='slot-label event-card__slot'
+                  style={{ backgroundColor: slot.bg, color: slot.color }}
+                >
+                  {slot.emoji} {slot.label} · {slot.time}
+                </Text>
+                <Text className='event-card__progress'>情境 {eventIndex} / {queueLength}</Text>
+              </View>
+              <Text className='event-card__title'>{event.title}</Text>
+              <Text className='event-card__description'>{event.description}</Text>
+            </View>
             <Image
               className='event-card__image'
               src={getImage(event.image)}
@@ -503,10 +501,6 @@ function GameScreen({
               lazyLoad={false}
               fadeIn={false}
             />
-            <View className='event-card__content'>
-              <Text className='event-card__title'>{event.title}</Text>
-              <Text className='event-card__description'>{event.description}</Text>
-            </View>
             <View className='choices'>
               {event.choices.map((choice, index) => (
                 <Button
@@ -529,91 +523,6 @@ function GameScreen({
   )
 }
 
-function ImpactStage({
-  stats,
-  previousStats,
-  canExplain,
-  transitioning,
-  onExplain,
-}: {
-  stats: GameStats
-  previousStats: GameStats
-  canExplain: boolean
-  transitioning: boolean
-  onExplain: () => void
-}) {
-  const changes = STAT_CONFIG.flatMap((item) => {
-    const before = previousStats[item.key]
-    const after = stats[item.key]
-    const diff = after - before
-    if (!diff) return []
-    return [{ ...item, before, after, diff }]
-  })
-
-  const hasCriticalState = stats.bloodSugar >= 80
-    || stats.bloodSugar < 40
-    || stats.satiety >= 90
-    || stats.satiety <= 20
-    || stats.energy <= 20
-    || stats.mood <= 20
-
-  return (
-    <View className={`impact-stage ${transitioning ? 'impact-stage--leaving' : ''}`}>
-      <Text className='impact-stage__eyebrow'>选择已生效</Text>
-      <Text className='impact-stage__title'>这一选，身体状态变了</Text>
-      <View className='impact-grid'>
-        {changes.map((item, index) => (
-          <View
-            className='impact-card'
-            key={item.key}
-            style={{
-              animationDelay: `${index * 120}ms`,
-              backgroundColor: item.bg,
-              borderColor: item.color,
-            }}
-          >
-            <View className='impact-card__accent' style={{ backgroundColor: item.color }} />
-            <Text className='impact-card__emoji'>{item.emoji}</Text>
-            <Text className='impact-card__label'>{getImpactLabel(item.key, item.diff)}</Text>
-            <Text className='impact-card__stat'>{item.label}</Text>
-            <View className='impact-card__value-row'>
-              <Text className='impact-card__direction' style={{ color: item.color }}>
-                {item.diff > 0 ? '↑' : '↓'}
-              </Text>
-              <Text className='impact-card__value'>{item.diff > 0 ? '+' : ''}{item.diff}</Text>
-            </View>
-            <Text className='impact-card__before-after'>{item.before} → {item.after}</Text>
-          </View>
-        ))}
-      </View>
-      {hasCriticalState && (
-        <View className='impact-alert'>
-          <Text className='impact-alert__icon'>!</Text>
-          <View>
-            <Text className='impact-alert__title'>状态进入警戒区</Text>
-            <Text className='impact-alert__text'>留意顶部数值，接下来的选择要更谨慎。</Text>
-          </View>
-        </View>
-      )}
-      {canExplain ? (
-        <View className='impact-stage__bridge'>
-          <Text className='impact-stage__bridge-text'>数值是结果，原因才能帮你做下一次选择。</Text>
-          <DoodleButton tone='yellow' onClick={onExplain}>看看为什么会这样 →</DoodleButton>
-          <View className='impact-stage__auto'>
-            <View className='impact-stage__auto-fill' />
-          </View>
-          <Text className='impact-stage__auto-text'>即将自动展开解释</Text>
-        </View>
-      ) : (
-        <View className='impact-stage__loading'>
-          <View />
-          <Text>先看清这次变化…</Text>
-        </View>
-      )}
-    </View>
-  )
-}
-
 function TipScreen({
   day,
   stats,
@@ -625,7 +534,6 @@ function TipScreen({
   onContinue,
   onRules,
   onMenu,
-  showLearningGoal,
 }: {
   day: number
   stats: GameStats
@@ -637,36 +545,18 @@ function TipScreen({
   onContinue: () => void
   onRules: () => void
   onMenu: () => void
-  showLearningGoal: boolean
 }) {
   const slot = TIME_SLOT_META[event.group]
-  const [showExplanation, setShowExplanation] = useState(false)
-  const [canExplain, setCanExplain] = useState(false)
-  const [transitioning, setTransitioning] = useState(false)
-  const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const transitionStarted = useRef(false)
-
-  const revealExplanation = useCallback(() => {
-    if (transitionStarted.current) return
-    transitionStarted.current = true
-    setTransitioning(true)
-    transitionTimer.current = setTimeout(() => setShowExplanation(true), 420)
-  }, [])
-
-  useEffect(() => {
-    const revealTimer = setTimeout(() => setCanExplain(true), 1600)
-    const autoTimer = setTimeout(revealExplanation, 4200)
-    return () => {
-      clearTimeout(revealTimer)
-      clearTimeout(autoTimer)
-      if (transitionTimer.current) clearTimeout(transitionTimer.current)
-    }
-  }, [revealExplanation])
-
   const changes = STAT_CONFIG.flatMap((item) => {
     const value = stats[item.key] - previousStats[item.key]
     return value ? [{ ...item, value }] : []
   })
+  const hasCriticalState = stats.bloodSugar >= 80
+    || stats.bloodSugar < 40
+    || stats.satiety >= 90
+    || stats.satiety <= 20
+    || stats.energy <= 20
+    || stats.mood <= 20
 
   return (
     <View className='game paper-bg'>
@@ -687,107 +577,68 @@ function TipScreen({
             </Text>
             <Text className='event-progress'>刚刚的情境</Text>
           </View>
-          {!showExplanation ? (
-            <ImpactStage
-              stats={stats}
-              previousStats={previousStats}
-              canExplain={canExplain}
-              transitioning={transitioning}
-              onExplain={revealExplanation}
-            />
-          ) : <View className='tip-card doodle-card tip-card--enter'>
+          <View className='tip-card doodle-card tip-card--enter'>
             <View className='tip-card__header'>
-              <View className='tip-icon'>!</View>
-              <View>
-                <Text className='tip-card__eyebrow'>你选择了</Text>
-                <Text className='tip-card__choice'>{choiceLabel}</Text>
-              </View>
+              <Text className='tip-card__eyebrow'>选择生效</Text>
+              <Text className='tip-card__choice'>{choiceLabel}</Text>
             </View>
             <View className='change-list'>
               {changes.map((item, index) => (
                 <View
                   className='change-pill change-pill--enter'
                   key={item.key}
-                  style={{ backgroundColor: item.bg, animationDelay: `${index * 110}ms` }}
+                  style={{
+                    backgroundColor: item.bg,
+                    borderColor: item.color,
+                    animationDelay: `${index * 120}ms`,
+                  }}
                 >
-                  <Text>{item.emoji} {item.label}</Text>
-                  <Text className={`change-pill__value ${item.value > 0 ? 'change-positive' : 'change-negative'}`}>
-                    {item.value > 0 ? '+' : ''}{item.value}
-                  </Text>
+                  <Text className='change-pill__label'>{item.emoji} {item.label}</Text>
+                  <View className='change-pill__value-row' style={{ color: item.color }}>
+                    <Text className='change-pill__direction'>{item.value > 0 ? '↑' : '↓'}</Text>
+                    <Text className='change-pill__value'>{item.value > 0 ? '+' : ''}{item.value}</Text>
+                  </View>
                 </View>
               ))}
             </View>
+            {hasCriticalState && (
+              <View className='impact-alert impact-alert--compact'>
+                <Text className='impact-alert__title'>⚠️ 状态进入警戒区，接下来的选择要更谨慎</Text>
+              </View>
+            )}
             {penalty.foodComa && (
-              <View className='penalty-box penalty-box--danger'>
-                <Text className='penalty-box__title'>🤢 吃撑了！胃部负担拉满</Text>
-                <Text className='penalty-box__text'>饱腹感溢出，额外扣除：精力 -15、心情 -10</Text>
+              <View className='penalty-box penalty-box--danger penalty-box--compact'>
+                <Text className='penalty-box__title'>😮‍💨 吃得有点撑，状态打了折扣</Text>
+                <Text className='penalty-box__text'>这次确实吃过量了，额外扣除：精力 -8、心情 -5</Text>
               </View>
             )}
             {penalty.starvation && (
-              <View className='penalty-box penalty-box--warning'>
+              <View className='penalty-box penalty-box--warning penalty-box--compact'>
                 <Text className='penalty-box__title'>😵 饿过头，状态开始失控！</Text>
-                <Text className='penalty-box__text'>饱腹感归零，额外扣除：血糖 -10、心情 -10</Text>
+                <Text className='penalty-box__text'>饱腹感归零，额外扣除：血糖 -5、精力 -10、心情 -8</Text>
               </View>
             )}
             <View className='science-box'>
               <Text className='science-box__title'>💡 为什么会这样？</Text>
               <Text className='science-box__text'>{scienceTip}</Text>
             </View>
-            {showLearningGoal && (
-              <View className='learning-goal'>
-                <Text className='learning-goal__badge'>你已经抓住核心</Text>
-                <Text className='learning-goal__title'>控糖，不是把血糖压得越低越好</Text>
-                <Text className='learning-goal__text'>也不是戒掉所有碳水。目标是尽量减少大起大落，同时兼顾精力、心情和饱腹。</Text>
-              </View>
-            )}
             <Text className='simulation-note'>以上为游戏化模拟效果，不代表真实个体的血糖变化。</Text>
             <DoodleButton onClick={onContinue}>继续</DoodleButton>
-          </View>}
+          </View>
         </View>
       </ScrollView>
     </View>
   )
 }
 
-function DaySummaryScreen({
-  day,
-  stats,
-  report,
-  totalDays,
-  onContinue,
-  onHome,
-}: {
-  day: number
-  stats: GameStats
-  report: NightlyReport | null
-  totalDays: number
-  onContinue: () => void
-  onHome: () => void
-}) {
+function DayTransitionScreen({ onContinue }: { onContinue: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onContinue, 300)
+    return () => clearTimeout(timer)
+  }, [onContinue])
+
   return (
-    <ScrollView className='page-scroll paper-bg' scrollY>
-      <View className='summary-page'>
-        <Image className='summary-image' src={startImage} mode='aspectFill' />
-        <View className='summary-card doodle-card'>
-          <Text className='summary-title'>{DAY_NAMES[day - 1]}结束！</Text>
-          <Text className='summary-subtitle'>今天的睡前模拟血糖分数：{stats.bloodSugar}</Text>
-          {report?.notes.map((note) => (
-            <View className='report-note' key={note}>✨ {note}</View>
-          ))}
-          <View className='progress-row'>
-            <Text>生存进度</Text>
-            <Text>{day}/{totalDays} 天</Text>
-          </View>
-          <View className='survival-progress'>
-            <View className='survival-progress__fill' style={{ width: `${(day / totalDays) * 100}%` }} />
-          </View>
-          <DoodleButton tone={day >= totalDays ? 'yellow' : 'green'} onClick={onContinue}>
-            {day >= totalDays ? '查看最终战报' : `进入第 ${day + 1} 天`}
-          </DoodleButton>
-          <DoodleButton tone='cream' onClick={onHome}>返回首页 · 保留进度</DoodleButton>
-        </View>
-      </View>
-    </ScrollView>
+    <View className='loading paper-bg'>正在进入下一天……</View>
   )
 }
 
@@ -996,20 +847,10 @@ export default function IndexPage() {
         onContinue={game.handleDismissTip}
         onRules={() => setShowRules(true)}
         onMenu={() => setShowGameMenu(true)}
-        showLearningGoal={game.currentDay === 1 && visibleEventIndex === 1}
       />
     )
   } else if (game.phase === 'day-summary') {
-    content = (
-      <DaySummaryScreen
-        day={game.currentDay}
-        stats={game.stats}
-        report={game.nightlyReport}
-        totalDays={game.TOTAL_DAYS}
-        onContinue={game.handleDaySummaryDone}
-        onHome={returnHome}
-      />
-    )
+    content = <DayTransitionScreen onContinue={game.handleDaySummaryDone} />
   } else if (game.phase === 'victory' || game.phase === 'gameover') {
     content = (
       <EndScreen

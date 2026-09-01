@@ -4,7 +4,8 @@ import type { GameEvent, GameStats, GameTrackers, NightlyReport } from './game-d
 export const NICKNAME_MAX_LEN = 8
 
 const NICKNAME_KEY = 'bloodsugar:nickname'
-const SAVE_KEY = 'bloodsugar:save:v1'
+// v2 重做了全部事件数值与过饱规则；旧存档内含旧事件副本，不能安全续玩。
+const SAVE_KEY = 'bloodsugar:save:v2'
 // 引导文案和入口发生明显变化时升级版本，让老用户也能看到一次。
 const INTRO_SEEN_KEY = 'bloodsugar:intro-seen:v2'
 

@@ -3,7 +3,8 @@
 import type { GameStats, GameTrackers, GameEvent, NightlyReport } from "@/lib/game-data"
 
 const NICKNAME_CACHE_KEY = "bloodsugar_nickname"
-const SAVE_PREFIX = "bloodsugar_save_"
+// v2 重做了全部事件数值与过饱规则；旧存档内含旧事件副本，不能安全续玩。
+const SAVE_PREFIX = "bloodsugar_save_v2_"
 const HISTORY_PREFIX = "bloodsugar_history_"
 
 const NICKNAME_MAX_LEN = 20

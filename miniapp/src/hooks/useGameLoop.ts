@@ -92,7 +92,12 @@ export function useGameLoop() {
       const result = computeChoiceResult(
         stats,
         trackers,
-        { label: choice.label, effect: choice.effect, scienceTip: choice.scienceTip },
+        {
+          label: choice.label,
+          effect: choice.effect,
+          scienceTip: choice.scienceTip,
+          overfull: choice.overfull,
+        },
         currentEvent.preEffect,
         { isLowSugarFocusDay: isLowSugar }
       )
@@ -145,9 +150,22 @@ export function useGameLoop() {
         ...prev,
         hangoverFreeDays: prev.hangoverFreeDays + (sleepBs >= 40 && sleepBs < 80 ? 1 : 0),
       }))
-      setStats(s)
       setNightlyReport(computeNightlyReport(s))
-      setPhase("day-summary")
+      const decayed = applyDayEndDecay(s)
+      setPrevStats(s)
+      setStats(decayed)
+
+      const death = checkGameOver(decayed, { isLowSugarFocusDay: isLowSugar })
+      if (death) {
+        setGameOverReason(death.reason)
+        setPhase("gameover")
+        return
+      }
+      if (currentDay >= TOTAL_DAYS) {
+        setPhase("victory")
+        return
+      }
+      startNewDay(currentDay + 1)
       return
     }
 
@@ -156,7 +174,7 @@ export function useGameLoop() {
     setEventIndexInDay(nextIdx)
     setCardKey((k) => k + 1)
     setPhase("playing")
-  }, [stats, eventIndexInDay, dayQueue, eveningSkipped, pendingGameOverReason, currentDay])
+  }, [stats, eventIndexInDay, dayQueue, eveningSkipped, pendingGameOverReason, currentDay, startNewDay])
 
   const handleDaySummaryDone = useCallback(() => {
     const decayed = applyDayEndDecay(stats)

@@ -94,7 +94,12 @@ export function useGameLoop() {
       const result = computeChoiceResult(
         stats,
         trackers,
-        { label: choice.label, effect: choice.effect, scienceTip: choice.scienceTip },
+        {
+          label: choice.label,
+          effect: choice.effect,
+          scienceTip: choice.scienceTip,
+          overfull: choice.overfull,
+        },
         currentEvent.preEffect,
         { isLowSugarFocusDay: isLowSugar }
       )
