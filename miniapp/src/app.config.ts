@@ -1,5 +1,11 @@
 export default defineAppConfig({
   pages: ['pages/index/index'],
+  subPackages: [
+    {
+      root: 'pages/analytics',
+      pages: ['index'],
+    },
+  ],
   window: {
     navigationBarBackgroundColor: '#FDFBF7',
     navigationBarTextStyle: 'black',

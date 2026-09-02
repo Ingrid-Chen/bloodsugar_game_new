@@ -380,6 +380,25 @@ page,
   gap: 22rpx;
 }
 
+.analytics-entry {
+  width: 100%;
+  margin: 0;
+  padding: 12rpx 20rpx;
+  border: 3rpx dashed $ink;
+  border-radius: 18rpx;
+  color: $ink;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: $type-small;
+  font-weight: 850;
+
+  &::after { border: 0; }
+
+  &:active {
+    transform: translateY(2rpx);
+    background: #fff5d8;
+  }
+}
+
 .disclaimer,
 .simulation-note,
 .game-hint {

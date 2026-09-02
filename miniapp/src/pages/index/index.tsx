@@ -290,6 +290,8 @@ function HomeScreen({
   onStart,
   onContinue,
   onRules,
+  showAnalytics,
+  onAnalytics,
 }: {
   nickname: string
   setNickname: (value: string) => void
@@ -297,6 +299,8 @@ function HomeScreen({
   onStart: () => void
   onContinue: () => void
   onRules: () => void
+  showAnalytics: boolean
+  onAnalytics: () => void
 }) {
   return (
     <ScrollView className='page-scroll paper-bg' scrollY>
@@ -348,6 +352,9 @@ function HomeScreen({
           <DoodleButton tone={hasSave ? 'cream' : 'green'} onClick={onStart}>
             {hasSave ? '重新开始' : '开始冒险！'}
           </DoodleButton>
+          {showAnalytics && (
+            <Button className='analytics-entry' onClick={onAnalytics}>📊 测试数据看板</Button>
+          )}
         </View>
 
         <Text className='disclaimer'>模拟游戏数值 · 仅供健康科普 · 不构成医疗建议</Text>
@@ -706,6 +713,13 @@ export default function IndexPage() {
   const gameSessionStartedAt = useRef<number | null>(null)
   const lastSceneKey = useRef('')
   const previousPhase = useRef(game.phase)
+  const showAnalytics = useMemo(() => {
+    try {
+      return Taro.getAccountInfoSync()?.miniProgram?.envVersion !== 'release'
+    } catch {
+      return true
+    }
+  }, [])
 
   useEffect(() => {
     setNickname(getNickname())
@@ -921,6 +935,8 @@ export default function IndexPage() {
         onStart={start}
         onContinue={resume}
         onRules={() => setShowRules(true)}
+        showAnalytics={showAnalytics}
+        onAnalytics={() => void Taro.navigateTo({ url: '/pages/analytics/index' })}
       />
     )
   } else if (showIntro) {
