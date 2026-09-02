@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "控糖生存指南微信小程序",
+  "engines": {
+    "node": ">=20 <24"
+  },
   "scripts": {
     "dev:weapp": "taro build --type weapp --watch",
     "build:weapp": "taro build --type weapp",

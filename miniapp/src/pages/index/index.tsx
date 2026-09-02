@@ -8,10 +8,12 @@ import {
   GAME_OVER_MESSAGES,
   STAT_CONFIG,
   TIME_SLOT_META,
+  getEventById,
   type Effect,
   type GameStats,
   type PostChoicePenalty,
 } from '../../lib/game-data'
+import { trackEvent } from '../../lib/analytics'
 import {
   NICKNAME_MAX_LEN,
   clearSave,
@@ -701,6 +703,9 @@ export default function IndexPage() {
   const [showRules, setShowRules] = useState(false)
   const [showGameMenu, setShowGameMenu] = useState(false)
   const [hasSave, setHasSave] = useState(false)
+  const gameSessionStartedAt = useRef<number | null>(null)
+  const lastSceneKey = useRef('')
+  const previousPhase = useRef(game.phase)
 
   useEffect(() => {
     setNickname(getNickname())
@@ -712,6 +717,54 @@ export default function IndexPage() {
     setSave({ nickname: nickname.trim(), ...game.saveState() })
     setHasSave(true)
   }, [showHome, showIntro, nickname, game.phase, game.stats, game.currentDay, game.eventIndexInDay, game.saveState])
+
+  useEffect(() => {
+    if (showHome || showIntro || game.phase !== 'playing' || !game.currentEvent) return
+    const sceneKey = `${game.currentDay}:${game.eventIndexInDay}:${game.currentEvent.id}`
+    if (lastSceneKey.current === sceneKey) return
+    lastSceneKey.current = sceneKey
+    trackEvent('scene_view', {
+      day: game.currentDay,
+      event_id: game.currentEvent.id,
+      event_group: game.currentEvent.group,
+    })
+  }, [showHome, showIntro, game.phase, game.currentDay, game.eventIndexInDay, game.currentEvent])
+
+  useEffect(() => {
+    const priorPhase = previousPhase.current
+    previousPhase.current = game.phase
+    if (priorPhase === game.phase) return
+
+    const durationSeconds = gameSessionStartedAt.current
+      ? Math.max(0, Math.round((Date.now() - gameSessionStartedAt.current) / 1000))
+      : 0
+
+    if (game.phase === 'victory') {
+      const grade = game.trackers.peakBsCount === 0
+        ? 'S'
+        : game.trackers.peakBsCount <= 3
+          ? 'A'
+          : game.trackers.peakBsCount <= 6
+            ? 'B'
+            : 'C'
+      trackEvent('game_complete', {
+        duration_seconds: durationSeconds,
+        grade,
+        peak_bs_count: game.trackers.peakBsCount,
+        food_coma_count: game.trackers.foodComaCount,
+        hangover_free_days: game.trackers.hangoverFreeDays,
+      })
+    } else if (game.phase === 'gameover') {
+      trackEvent('game_over', {
+        day: game.currentDay,
+        duration_seconds: durationSeconds,
+        game_over_reason: game.gameOverReason || 'unknown',
+        peak_bs_count: game.trackers.peakBsCount,
+        food_coma_count: game.trackers.foodComaCount,
+        hangover_free_days: game.trackers.hangoverFreeDays,
+      })
+    }
+  }, [game.phase, game.currentDay, game.gameOverReason, game.trackers])
 
   const queueLength = useMemo(() => game.dayQueue.filter(Boolean).length, [game.dayQueue])
   const visibleEventIndex = useMemo(
@@ -732,10 +785,14 @@ export default function IndexPage() {
 
   const start = () => {
     if (!validateNickname()) return
+    const showsIntro = !hasSeenIntro()
     clearSave()
+    gameSessionStartedAt.current = Date.now()
+    lastSceneKey.current = ''
     game.handleStart()
     setShowHome(false)
-    setShowIntro(!hasSeenIntro())
+    setShowIntro(showsIntro)
+    trackEvent('game_start', { shows_intro: showsIntro })
   }
 
   const resume = () => {
@@ -747,16 +804,28 @@ export default function IndexPage() {
     setNickname(saved.nickname)
     cacheNickname(saved.nickname)
     game.restoreSave(saved)
+    gameSessionStartedAt.current = Date.now()
+    lastSceneKey.current = ''
     setShowHome(false)
     setShowIntro(false)
+    trackEvent('game_resume', {
+      day: saved.currentDay,
+      phase: saved.phase,
+    })
   }
 
   const restart = () => {
     if (!validateNickname()) return
     clearSave()
+    gameSessionStartedAt.current = Date.now()
+    lastSceneKey.current = ''
     game.restart()
     setShowHome(false)
     setShowIntro(false)
+    trackEvent('game_restart', {
+      day: game.currentDay,
+      phase: game.phase,
+    })
   }
 
   const endAndGoHome = () => {
@@ -765,12 +834,20 @@ export default function IndexPage() {
     setShowIntro(false)
     setShowGameMenu(false)
     setShowHome(true)
+    gameSessionStartedAt.current = null
+    lastSceneKey.current = ''
   }
 
   const returnHome = () => {
     if (nickname.trim() && game.phase !== 'start') {
       setSave({ nickname: nickname.trim(), ...game.saveState() })
       setHasSave(true)
+      trackEvent('game_exit', {
+        day: game.currentDay,
+        event_id: game.currentEvent?.id,
+        phase: game.phase,
+        exit_type: 'save_and_home',
+      })
     }
     setShowGameMenu(false)
     setShowHome(true)
@@ -794,7 +871,15 @@ export default function IndexPage() {
       confirmText: '结束本局',
       confirmColor: '#e05a5a',
     })
-    if (result.confirm) endAndGoHome()
+    if (result.confirm) {
+      trackEvent('game_exit', {
+        day: game.currentDay,
+        event_id: game.currentEvent?.id,
+        phase: game.phase,
+        exit_type: 'clear_progress',
+      })
+      endAndGoHome()
+    }
   }
 
   const openIntroFromMenu = () => {
@@ -805,6 +890,25 @@ export default function IndexPage() {
   const finishIntro = () => {
     markIntroSeen()
     setShowIntro(false)
+    trackEvent('intro_complete')
+  }
+
+  const choose = (effect: Effect, index: number) => {
+    const event = game.currentEvent
+    if (!event) return
+    const canonicalEvent = getEventById(event.id)
+    const matchedIndex = canonicalEvent?.choices.findIndex(
+      (choice) => choice.label === event.choices[index]?.label
+    ) ?? -1
+    const canonicalIndex = matchedIndex >= 0 ? matchedIndex : index
+    trackEvent('choice_submit', {
+      day: game.currentDay,
+      event_id: event.id,
+      event_group: event.group,
+      choice_id: canonicalIndex === 0 ? 'a' : 'b',
+      choice_position: index === 0 ? 'left' : 'right',
+    })
+    game.handleChoose(effect, index)
   }
 
   let content: ReactNode
@@ -829,7 +933,7 @@ export default function IndexPage() {
         event={game.currentEvent}
         eventIndex={visibleEventIndex}
         queueLength={queueLength}
-        onChoose={game.handleChoose}
+        onChoose={choose}
         onRules={() => setShowRules(true)}
         onMenu={() => setShowGameMenu(true)}
       />

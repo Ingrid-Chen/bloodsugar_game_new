@@ -1,5 +1,6 @@
 {
   "miniprogramRoot": "dist/",
+  "cloudfunctionRoot": "cloudfunctions/",
   "projectname": "控糖生存指南",
   "description": "健康生活科普互动游戏",
   "appid": "wx9873d2fa8d99005b",
