@@ -45,9 +45,9 @@ const WINDOWS: WindowDays[] = [7, 30, 90]
 
 function canViewDashboard(): boolean {
   try {
-    return Taro.getAccountInfoSync()?.miniProgram?.envVersion !== 'release'
+    return Taro.getAccountInfoSync()?.miniProgram?.envVersion === 'develop'
   } catch {
-    return true
+    return false
   }
 }
 
@@ -127,7 +127,7 @@ export default function AnalyticsPage() {
       <View className='dashboard'>
         <View className='dashboard-head'>
           <View>
-            <Text className='dashboard-kicker'>仅开发版 / 体验版可见</Text>
+            <Text className='dashboard-kicker'>仅开发预览可见</Text>
             <Text className='dashboard-title'>测试数据看板</Text>
           </View>
         </View>

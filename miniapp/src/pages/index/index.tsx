@@ -715,9 +715,9 @@ export default function IndexPage() {
   const previousPhase = useRef(game.phase)
   const showAnalytics = useMemo(() => {
     try {
-      return Taro.getAccountInfoSync()?.miniProgram?.envVersion !== 'release'
+      return Taro.getAccountInfoSync()?.miniProgram?.envVersion === 'develop'
     } catch {
-      return true
+      return false
     }
   }, [])
 
