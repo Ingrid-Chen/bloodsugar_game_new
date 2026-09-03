@@ -1,30 +1,54 @@
 import Taro from '@tarojs/taro'
-import type { GameEvent, GameStats, GameTrackers, NightlyReport } from './game-data'
+import { GAME_DATA_VERSION } from './game-data'
+import type { ChoiceRecord, GameEvent, GameOverReason, GameStats, GameTrackers, NightlyReport } from './game-data'
 
 export const NICKNAME_MAX_LEN = 8
 
 const NICKNAME_KEY = 'bloodsugar:nickname'
-// v2 重做了全部事件数值与过饱规则；旧存档内含旧事件副本，不能安全续玩。
-const SAVE_KEY = 'bloodsugar:save:v2'
+// v3 更新了全部选项、数值与死亡规则；旧存档不能安全续玩。
+const SAVE_KEY = 'bloodsugar:save:v3'
 // 引导文案和入口发生明显变化时升级版本，让老用户也能看到一次。
-const INTRO_SEEN_KEY = 'bloodsugar:intro-seen:v2'
+const INTRO_SEEN_KEY = 'bloodsugar:intro-seen:v3'
+const HISTORY_PREFIX = 'bloodsugar:history:v1:'
 
 export interface SaveData {
   nickname: string
+  dataVersion: string
+  runId: string
   phase: string
   stats: GameStats
   prevStats: GameStats
   currentDay: number
   dayQueue: (GameEvent | null)[]
   eventIndexInDay: number
-  gameOverReason?: string
-  pendingGameOverReason?: string | null
+  gameOverReason?: GameOverReason | ''
+  pendingGameOverReason?: GameOverReason | null
   cardKey?: number
   pendingTip?: unknown
   nightlyReport?: NightlyReport | null
   eveningSkipped?: boolean
   trackers: GameTrackers
   usedIds?: number[]
+  specialLowSugarDay: number
+  lowSugarRiskChoicesToday: string[]
+  firstDayGraceAvailable: boolean
+  choiceHistory: ChoiceRecord[]
+}
+
+export interface HistoryEntry {
+  id: string
+  timestamp: number
+  result: 'victory' | 'gameover'
+  reason?: GameOverReason
+  trackers: GameTrackers
+  dayReached: number
+  stats: GameStats
+  choices: ChoiceRecord[]
+  dataVersion: string
+}
+
+function historyKey(nickname: string): string {
+  return `${HISTORY_PREFIX}${encodeURIComponent(nickname.trim().slice(0, NICKNAME_MAX_LEN))}`
 }
 
 export function getNickname(): string {
@@ -46,9 +70,31 @@ export function setNickname(value: string): void {
 export function getSave(): SaveData | null {
   try {
     const value = Taro.getStorageSync(SAVE_KEY)
-    return value && typeof value === 'object' ? (value as SaveData) : null
+    if (!value || typeof value !== 'object') return null
+    const save = value as SaveData
+    return save.dataVersion === GAME_DATA_VERSION && save.runId ? save : null
   } catch {
     return null
+  }
+}
+
+export function getHistory(nickname: string): HistoryEntry[] {
+  if (!nickname.trim()) return []
+  try {
+    const value = Taro.getStorageSync(historyKey(nickname))
+    return Array.isArray(value) ? value.filter((entry) => entry && typeof entry === 'object') : []
+  } catch {
+    return []
+  }
+}
+
+export function appendHistory(nickname: string, entry: HistoryEntry): void {
+  if (!nickname.trim() || !entry.id) return
+  try {
+    const history = getHistory(nickname).filter((item) => item.id !== entry.id)
+    Taro.setStorageSync(historyKey(nickname), [entry, ...history].slice(0, 50))
+  } catch {
+    // 历史记录写入失败不应影响玩家查看结局。
   }
 }
 

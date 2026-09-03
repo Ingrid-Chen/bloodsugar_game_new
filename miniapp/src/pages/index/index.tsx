@@ -5,18 +5,21 @@ import Taro from '@tarojs/taro'
 import { useGameLoop } from '../../hooks/useGameLoop'
 import {
   DAY_NAMES,
+  GAME_DATA_VERSION,
   GAME_OVER_MESSAGES,
   STAT_CONFIG,
   TIME_SLOT_META,
-  getEventById,
   type Effect,
   type GameStats,
+  type GameOverReason,
   type PostChoicePenalty,
 } from '../../lib/game-data'
 import { trackEvent } from '../../lib/analytics'
 import {
   NICKNAME_MAX_LEN,
   clearSave,
+  appendHistory,
+  getHistory,
   getNickname,
   getSave,
   hasSeenIntro,
@@ -24,6 +27,7 @@ import {
   setNickname as cacheNickname,
   setSave,
 } from '../../lib/storage'
+import { RecapScreen } from './recap'
 import startImage from '../../assets/images/s-start.jpg'
 import victoryImage from '../../assets/images/s-victory.jpg'
 import gameOverImage from '../../assets/images/s-gameover.jpg'
@@ -169,7 +173,7 @@ function OnboardingScreen({ onContinue }: { onContinue: () => void }) {
     <ScrollView className='page-scroll paper-bg' scrollY>
       <View className='onboarding'>
         <View className='onboarding__kicker'>先从你的一天开始</View>
-        <Text className='onboarding__title'>你也经历过这些吗？</Text>
+        <Text className='onboarding__title'>为什么血糖和我有关系？</Text>
         <View className='onboarding__moments'>
           <View className='moment-chip moment-chip--green'>
             <Text className='moment-chip__emoji'>🥱</Text>
@@ -290,6 +294,9 @@ function HomeScreen({
   onStart,
   onContinue,
   onRules,
+  onIntro,
+  hasHistory,
+  onHistory,
   showAnalytics,
   onAnalytics,
 }: {
@@ -299,6 +306,9 @@ function HomeScreen({
   onStart: () => void
   onContinue: () => void
   onRules: () => void
+  onIntro: () => void
+  hasHistory: boolean
+  onHistory: () => void
   showAnalytics: boolean
   onAnalytics: () => void
 }) {
@@ -352,6 +362,8 @@ function HomeScreen({
           <DoodleButton tone={hasSave ? 'cream' : 'green'} onClick={onStart}>
             {hasSave ? '重新开始' : '开始冒险！'}
           </DoodleButton>
+          <DoodleButton tone='yellow' onClick={onIntro}>为什么要关注血糖？</DoodleButton>
+          {hasHistory && <DoodleButton tone='cream' onClick={onHistory}>参与历史与复盘</DoodleButton>}
           {showAnalytics && (
             <Button className='analytics-entry' onClick={onAnalytics}>📊 测试数据看板</Button>
           )}
@@ -540,6 +552,7 @@ function TipScreen({
   choiceLabel,
   scienceTip,
   penalty,
+  boundaryWarning,
   onContinue,
   onRules,
   onMenu,
@@ -551,6 +564,7 @@ function TipScreen({
   choiceLabel: string
   scienceTip: string
   penalty: PostChoicePenalty
+  boundaryWarning?: string
   onContinue: () => void
   onRules: () => void
   onMenu: () => void
@@ -615,6 +629,12 @@ function TipScreen({
                 <Text className='impact-alert__title'>⚠️ 状态进入警戒区，接下来的选择要更谨慎</Text>
               </View>
             )}
+            {boundaryWarning && (
+              <View className='penalty-box penalty-box--warning penalty-box--compact'>
+                <Text className='penalty-box__title'>🛟 本次没有直接结束</Text>
+                <Text className='penalty-box__text'>{boundaryWarning}</Text>
+              </View>
+            )}
             {penalty.foodComa && (
               <View className='penalty-box penalty-box--danger penalty-box--compact'>
                 <Text className='penalty-box__title'>😮‍💨 吃得有点撑，状态打了折扣</Text>
@@ -628,7 +648,7 @@ function TipScreen({
               </View>
             )}
             <View className='science-box'>
-              <Text className='science-box__title'>💡 为什么会这样？</Text>
+              <Text className='science-box__title'>💡 血糖小课堂</Text>
               <Text className='science-box__text'>{scienceTip}</Text>
             </View>
             <Text className='simulation-note'>以上为游戏化模拟效果，不代表真实个体的血糖变化。</Text>
@@ -658,13 +678,15 @@ function EndScreen({
   trackers,
   onRestart,
   onHome,
+  onRecap,
 }: {
   victory: boolean
   nickname: string
-  reason?: string
+  reason?: GameOverReason | ''
   trackers: { peakBsCount: number; foodComaCount: number; hangoverFreeDays: number }
   onRestart: () => void
   onHome: () => void
+  onRecap: () => void
 }) {
   const message = reason ? GAME_OVER_MESSAGES[reason] : null
   const grade = trackers.peakBsCount === 0 ? 'S' : trackers.peakBsCount <= 3 ? 'A' : trackers.peakBsCount <= 6 ? 'B' : 'C'
@@ -694,6 +716,7 @@ function EndScreen({
             </>
           )}
           <DoodleButton onClick={onRestart}>再挑战一次</DoodleButton>
+          <DoodleButton tone='yellow' onClick={onRecap}>查看本局复盘</DoodleButton>
           <DoodleButton tone='cream' onClick={onHome}>返回首页</DoodleButton>
           <Text className='simulation-note'>游戏结果仅用于科普互动，不是健康评估或医疗结论。</Text>
         </View>
@@ -707,9 +730,11 @@ export default function IndexPage() {
   const [nickname, setNickname] = useState('')
   const [showHome, setShowHome] = useState(true)
   const [showIntro, setShowIntro] = useState(false)
+  const [showRecap, setShowRecap] = useState(false)
   const [showRules, setShowRules] = useState(false)
   const [showGameMenu, setShowGameMenu] = useState(false)
   const [hasSave, setHasSave] = useState(false)
+  const [hasHistory, setHasHistory] = useState(false)
   const gameSessionStartedAt = useRef<number | null>(null)
   const lastSceneKey = useRef('')
   const previousPhase = useRef(game.phase)
@@ -722,15 +747,21 @@ export default function IndexPage() {
   }, [])
 
   useEffect(() => {
-    setNickname(getNickname())
+    const cachedNickname = getNickname()
+    setNickname(cachedNickname)
     setHasSave(Boolean(getSave()))
+    setHasHistory(Boolean(cachedNickname && getHistory(cachedNickname).length))
   }, [])
 
   useEffect(() => {
-    if (showHome || showIntro || game.phase === 'start' || !nickname.trim()) return
+    setHasHistory(Boolean(nickname.trim() && getHistory(nickname.trim()).length))
+  }, [nickname])
+
+  useEffect(() => {
+    if (showHome || showIntro || showRecap || game.phase === 'start' || !nickname.trim()) return
     setSave({ nickname: nickname.trim(), ...game.saveState() })
     setHasSave(true)
-  }, [showHome, showIntro, nickname, game.phase, game.stats, game.currentDay, game.eventIndexInDay, game.saveState])
+  }, [showHome, showIntro, showRecap, nickname, game.phase, game.stats, game.currentDay, game.eventIndexInDay, game.saveState])
 
   useEffect(() => {
     if (showHome || showIntro || game.phase !== 'playing' || !game.currentEvent) return
@@ -768,6 +799,21 @@ export default function IndexPage() {
         food_coma_count: game.trackers.foodComaCount,
         hangover_free_days: game.trackers.hangoverFreeDays,
       })
+      if (game.runId && nickname.trim()) {
+        appendHistory(nickname.trim(), {
+          id: game.runId,
+          timestamp: Date.now(),
+          result: 'victory',
+          trackers: game.trackers,
+          dayReached: game.currentDay,
+          stats: game.stats,
+          choices: game.choiceHistory,
+          dataVersion: GAME_DATA_VERSION,
+        })
+        clearSave()
+        setHasSave(false)
+        setHasHistory(true)
+      }
     } else if (game.phase === 'gameover') {
       trackEvent('game_over', {
         day: game.currentDay,
@@ -777,8 +823,24 @@ export default function IndexPage() {
         food_coma_count: game.trackers.foodComaCount,
         hangover_free_days: game.trackers.hangoverFreeDays,
       })
+      if (game.runId && nickname.trim() && game.gameOverReason) {
+        appendHistory(nickname.trim(), {
+          id: game.runId,
+          timestamp: Date.now(),
+          result: 'gameover',
+          reason: game.gameOverReason,
+          trackers: game.trackers,
+          dayReached: game.currentDay,
+          stats: game.stats,
+          choices: game.choiceHistory,
+          dataVersion: GAME_DATA_VERSION,
+        })
+        clearSave()
+        setHasSave(false)
+        setHasHistory(true)
+      }
     }
-  }, [game.phase, game.currentDay, game.gameOverReason, game.trackers])
+  }, [game.phase, game.currentDay, game.gameOverReason, game.trackers, game.runId, game.stats, game.choiceHistory, nickname])
 
   const queueLength = useMemo(() => game.dayQueue.filter(Boolean).length, [game.dayQueue])
   const visibleEventIndex = useMemo(
@@ -846,6 +908,7 @@ export default function IndexPage() {
     clearSave()
     setHasSave(false)
     setShowIntro(false)
+    setShowRecap(false)
     setShowGameMenu(false)
     setShowHome(true)
     gameSessionStartedAt.current = null
@@ -901,6 +964,17 @@ export default function IndexPage() {
     setShowIntro(true)
   }
 
+  const openRecap = () => {
+    setShowGameMenu(false)
+    setShowIntro(false)
+    setShowRecap(true)
+  }
+
+  const closeRecapToHome = () => {
+    setShowRecap(false)
+    setShowHome(true)
+  }
+
   const finishIntro = () => {
     markIntroSeen()
     setShowIntro(false)
@@ -910,23 +984,29 @@ export default function IndexPage() {
   const choose = (effect: Effect, index: number) => {
     const event = game.currentEvent
     if (!event) return
-    const canonicalEvent = getEventById(event.id)
-    const matchedIndex = canonicalEvent?.choices.findIndex(
-      (choice) => choice.label === event.choices[index]?.label
-    ) ?? -1
-    const canonicalIndex = matchedIndex >= 0 ? matchedIndex : index
+    const selectedChoice = event.choices[index]
     trackEvent('choice_submit', {
       day: game.currentDay,
       event_id: event.id,
       event_group: event.group,
-      choice_id: canonicalIndex === 0 ? 'a' : 'b',
+      choice_id: selectedChoice.id.toLowerCase(),
       choice_position: index === 0 ? 'left' : 'right',
     })
     game.handleChoose(effect, index)
   }
 
   let content: ReactNode
-  if (showHome) {
+  if (showRecap) {
+    content = (
+      <RecapScreen
+        nickname={nickname || '小糖'}
+        history={getHistory(nickname.trim())}
+        onBack={closeRecapToHome}
+      />
+    )
+  } else if (showIntro) {
+    content = <OnboardingScreen onContinue={finishIntro} />
+  } else if (showHome) {
     content = (
       <HomeScreen
         nickname={nickname}
@@ -935,12 +1015,13 @@ export default function IndexPage() {
         onStart={start}
         onContinue={resume}
         onRules={() => setShowRules(true)}
+        onIntro={() => setShowIntro(true)}
+        hasHistory={hasHistory}
+        onHistory={openRecap}
         showAnalytics={showAnalytics}
         onAnalytics={() => void Taro.navigateTo({ url: '/pages/analytics/index' })}
       />
     )
-  } else if (showIntro) {
-    content = <OnboardingScreen onContinue={finishIntro} />
   } else if (game.phase === 'playing' && game.currentEvent) {
     content = (
       <GameScreen
@@ -964,6 +1045,7 @@ export default function IndexPage() {
         choiceLabel={game.pendingTip.choiceLabel}
         scienceTip={game.pendingTip.scienceTip}
         penalty={game.pendingTip.penalty}
+        boundaryWarning={game.pendingTip.boundaryWarning}
         onContinue={game.handleDismissTip}
         onRules={() => setShowRules(true)}
         onMenu={() => setShowGameMenu(true)}
@@ -980,6 +1062,7 @@ export default function IndexPage() {
         trackers={game.trackers}
         onRestart={restart}
         onHome={endAndGoHome}
+        onRecap={openRecap}
       />
     )
   } else {

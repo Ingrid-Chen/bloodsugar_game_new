@@ -30,6 +30,8 @@ function getRecapContent(history: HistoryEntry[]) {
     dayReached: entry.dayReached,
     reason: entry.reason,
     trackers: entry.trackers,
+    correct: entry.choices.filter((choice) => choice.isPreferred).length,
+    total: entry.choices.length,
   }))
 
   const gameovers = history.filter((e) => e.result === "gameover")
@@ -43,13 +45,6 @@ function getRecapContent(history: HistoryEntry[]) {
 
   const topReason = Object.entries(byReason).sort((a, b) => b[1] - a[1])[0]
   const topDay = Object.entries(byDay).sort((a, b) => b[1] - a[1])[0]
-  const totalPeakBs = history.reduce((s, e) => s + e.trackers.peakBsCount, 0)
-  const totalFoodComa = history.reduce((s, e) => s + e.trackers.foodComaCount, 0)
-  const highCount = gameovers.filter((e) => e.reason === "bloodSugarHigh").length
-  const lowCount = gameovers.filter((e) => e.reason === "bloodSugarLow").length
-  const energyCount = gameovers.filter((e) => e.reason === "energyZero").length
-  const moodCount = gameovers.filter((e) => e.reason === "moodZero").length
-
   const summaryLines: string[] = []
   if (gameovers.length > 0) {
     if (topReason) {
@@ -61,29 +56,25 @@ function getRecapContent(history: HistoryEntry[]) {
     }
   }
 
-  const misconceptionLines: string[] = []
-  misconceptionLines.push("【常见控糖误区总结】")
-  if (highCount >= 1 || totalPeakBs >= 3) {
-    misconceptionLines.push("• 误区：少吃主食就能控糖。真相：突然断碳或只吃精制碳水都会导致血糖大起大落，应选粗粮、控制量、搭配蛋白质与蔬菜。")
-  }
-  if (lowCount >= 1) {
-    misconceptionLines.push("• 误区：饿着更控糖。真相：长时间空腹易低血糖，适当加餐（如少量水果、坚果）比硬扛更稳。")
-  }
-  if (totalFoodComa >= 1) {
-    misconceptionLines.push("• 误区：吃饱了才不馋。真相：饱腹感爆表会触发「食困」惩罚，七分饱、少食多餐更安全。")
-  }
-  if (energyCount >= 1 || moodCount >= 1) {
-    misconceptionLines.push("• 误区：控糖就要牺牲睡眠和心情。真相：精力与心情崩了也会游戏结束，睡眠和情绪管理同样是控糖的一部分。")
-  }
-  if (misconceptionLines.length <= 1) {
-    misconceptionLines.push("• 多玩几盘、多试不同选择，系统会根据你的记录给出更贴合的误区提醒。")
-  }
+  const gapMap = new Map<string, { count: number; events: string[] }>()
+  history.flatMap((entry) => entry.choices).filter((choice) => !choice.isPreferred).forEach((choice) => {
+    choice.knowledgeTags.forEach((tag) => {
+      const value = gapMap.get(tag) ?? { count: 0, events: [] }
+      value.count += 1
+      if (!value.events.includes(choice.eventTitle)) value.events.push(choice.eventTitle)
+      gapMap.set(tag, value)
+    })
+  })
+  const knowledgeGaps = [...gapMap.entries()]
+    .map(([tag, value]) => ({ tag, ...value }))
+    .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
+    .slice(0, 3)
 
-  return { perGame, summaryLines, misconceptionLines }
+  return { perGame, summaryLines, knowledgeGaps }
 }
 
 export function RecapScreen({ nickname, history, onBack }: RecapScreenProps) {
-  const { perGame, summaryLines, misconceptionLines } = getRecapContent(history)
+  const { perGame, summaryLines, knowledgeGaps } = getRecapContent(history)
 
   return (
     <div className="min-h-svh flex flex-col paper-bg px-4 pb-8 overflow-x-hidden">
@@ -113,6 +104,7 @@ export function RecapScreen({ nickname, history, onBack }: RecapScreenProps) {
               >
                 <span className="font-bold text-slate-800">{"第 " + item.index + " 盘"}</span>
                 <span className="text-slate-700">{item.label}</span>
+                {item.total > 0 && <span className="text-slate-500">答对 {item.correct}/{item.total}</span>}
               </li>
             ))}
           </ul>
@@ -133,13 +125,17 @@ export function RecapScreen({ nickname, history, onBack }: RecapScreenProps) {
         </div>
       )}
 
-      {/* 控糖知识误区总结 */}
+      {/* 根据实际选择生成知识薄弱点 */}
       <div className="mt-5">
-        <h2 className="text-sm font-black text-slate-800 mb-2">{"控糖误区小课堂"}</h2>
+        <h2 className="text-sm font-black text-slate-800 mb-2">{"最值得复习的血糖知识"}</h2>
         <div className="px-4 py-4 rounded-xl border-2 border-slate-800 shadow-[3px_3px_0px_0px_#1e293b] bg-[#fef6d4] space-y-2">
-          {misconceptionLines.map((line, i) => (
-            <p key={i} className="text-[13px] text-slate-700 leading-relaxed">
-              {line}
+          {history.length === 0 ? (
+            <p className="text-[13px] text-slate-500">完成一局后，这里会根据你的真实选择生成复盘。</p>
+          ) : knowledgeGaps.length === 0 ? (
+            <p className="text-[13px] text-slate-700">目前没有明显薄弱项，你的选择很稳。</p>
+          ) : knowledgeGaps.map((item, index) => (
+            <p key={item.tag} className="text-[13px] text-slate-700 leading-relaxed">
+              {index + 1}. {item.tag}（出现 {item.count} 次）· 相关场景：{item.events.slice(0, 2).join("、")}
             </p>
           ))}
         </div>

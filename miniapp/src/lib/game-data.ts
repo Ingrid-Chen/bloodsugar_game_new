@@ -12,13 +12,31 @@ export interface Effect {
   satiety?: number
 }
 
+export type ChoiceId = "A" | "B"
+
 export interface Choice {
+  /** 稳定的题库编号；左右展示顺序可以随机，但统计和复盘始终使用这个编号。 */
+  id: ChoiceId
   label: string
   tip?: string
   effect: Effect
+  isPreferred: boolean
+  knowledgeTags: string[]
+  /** 只有连续命中至少两个风险节点，才允许触发低糖死亡。 */
+  lowSugarRisk?: boolean
   scienceTip: string
   /** 仅用于选项文字已经明确表达“硬撑/过量”的场景，避免普通高饱腹餐误判为吃撑。 */
   overfull?: boolean
+}
+
+export interface ChoiceRecord {
+  day: number
+  eventId: number
+  eventTitle: string
+  choiceId: ChoiceId
+  choiceLabel: string
+  isPreferred: boolean
+  knowledgeTags: string[]
 }
 
 export type EventGroup = "breakfast" | "lunch" | "afternoon" | "dinner" | "evening"
@@ -36,6 +54,7 @@ export interface GameEvent {
 }
 
 export const CHARACTER_NAME = "小糖"
+export const GAME_DATA_VERSION = "2026-09-03-v8"
 
 export const DAY_NAMES = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"] as const
 
@@ -86,88 +105,88 @@ const BREAKFAST_EVENTS: GameEvent[] = [
     id: 1, group: "breakfast", title: "起晚了", description: "起晚了，来不及好好吃饭。",
     image: "/images/s-morning.png",
     choices: [
-      { label: "当做轻断食，今天就不吃早餐啦", effect: { bloodSugar: 0, energy: -15, satiety: -15, mood: -5 }, scienceTip: "把迟到顺便包装成轻断食，听起来很聪明，但这次其实只是被动漏掉早餐。空腹继续拉长，上午的饥饿和注意力更容易受影响，午餐也可能吃得又快又多；来不及坐下吃，也可以用鸡蛋、无糖豆浆加一小份主食快速开局。" },
-      { label: "随便买根热甜玉米边走边啃", effect: { bloodSugar: 15, energy: 10, satiety: 20, mood: 5 }, scienceTip: "玉米救场成功：它保留了颗粒结构和一部分膳食纤维，通常比精制面包更耐嚼、消化更慢。不过单独一根玉米的蛋白质不多，下次顺手配个鸡蛋、牛奶或无糖豆浆，会更扛饿。" },
+      { id: "A", label: "当做轻断食，今天就不吃早餐啦", effect: { bloodSugar: -9, mood: -5, energy: -23, satiety: -19 }, isPreferred: false, knowledgeTags: ["规律进餐","混合餐搭配"], lowSugarRisk: true, scienceTip: "把早餐一路拖到中午，看起来像轻断食，但这次并不会自动换来更稳的状态。空腹继续延长，有些人上午更容易疲惫，中午也可能更饿、吃得更急。玉米提供一份主食，牛奶补上蛋白质，这个组合比只喝水或单独啃玉米更能接住上午的精力和饥饿。" },
+      { id: "B", label: "路上买根玉米，再带一盒牛奶", effect: { bloodSugar: 19, mood: 9, energy: 14, satiety: 20 }, isPreferred: true, knowledgeTags: ["规律进餐","混合餐搭配"], scienceTip: "玉米配牛奶不是“零碳水”早餐，它的优势正是主食和蛋白质都没有缺席。空腹继续延长，有些人上午更容易疲惫，中午也可能更饿、吃得更急。玉米提供一份主食，牛奶补上蛋白质，这个组合比只喝水或单独啃玉米更能接住上午的精力和饥饿。" },
     ],
   },
   {
     id: 2, group: "breakfast", title: "周末早餐", description: "难得周末，认真吃顿早饭。", weekendOnly: true,
     image: "/images/s-breakfast.jpg",
     choices: [
-      { label: "榨一杯现打鲜橙汁，营养又健康", effect: { bloodSugar: 25, energy: -5, satiety: 5, mood: 10 }, scienceTip: "橙子一变成果汁，果肉的细胞结构被打散，咀嚼感和饱腹感也跟着下线；同样几口，往往还能喝进比吃整果更多的量。想让这份水果更耐饿、吸收更平缓，直接剥一个完整橙子会更合适。" },
-      { label: "煮两个水煮蛋，配全麦吐司", effect: { bloodSugar: 12, energy: 15, satiety: 30, mood: 5 }, scienceTip: "朴素，但很能打。鸡蛋补上蛋白质，全麦吐司提供碳水和纤维，混合餐的消化节奏通常比单喝果汁更平缓；再看一眼配料表，确认“全麦粉”不是只来客串。" },
+      { id: "A", label: "用两个橙子榨一杯鲜果汁，营养又健康", effect: { bloodSugar: 33, mood: 18, energy: -13, satiety: 9 }, isPreferred: false, knowledgeTags: ["水果形态","混合餐搭配"], scienceTip: "鲜榨后，橙子的细胞结构和咀嚼过程被削弱，还容易一杯喝下两个橙子的量，糖吸收通常更快。鸡蛋配全麦吐司有适量主食、蛋白质和纤维，会更耐饿。" },
+      { id: "B", label: "吃两个水煮蛋，配两片全麦吐司", effect: { bloodSugar: 6, mood: 0, energy: 19, satiety: 26 }, isPreferred: true, knowledgeTags: ["水果形态","混合餐搭配"], scienceTip: "鸡蛋配全麦吐司把主食、蛋白质和纤维放在一顿里，通常比果汁更耐饿。橙子榨汁后结构被打散、无需咀嚼，也更容易一次喝多，糖吸收会更快。" },
     ],
   },
   {
     id: 3, group: "breakfast", title: "妈妈的爱", description: "妈妈特意起早冲了一碗黑芝麻核桃糊。",
     image: "/images/s-morning.png",
     choices: [
-      { label: "感动地全部喝完", effect: { bloodSugar: 25, energy: -5, satiety: 25, mood: 10 }, scienceTip: "打成粉糊状的五谷失去颗粒结构，淀粉酶能快速分解，升糖速度比完整谷物明显更快。" },
-      { label: "喝一半，说胃口不好", effect: { bloodSugar: 12, energy: 5, satiety: 15, mood: 0 }, scienceTip: "喝一半，先把这顿的碳水总量和血糖负荷降下来；核桃、芝麻里的脂肪和蛋白质也会放慢整体消化节奏。给自己留到舒服的份量，妈妈的心意不用靠清空大碗来证明。" },
+      { id: "A", label: "把这碗黑芝麻核桃糊全部喝完", effect: { bloodSugar: 33, mood: 14, energy: -9, satiety: 29 }, isPreferred: false, knowledgeTags: ["食物结构与糊化","碳水份量"], scienceTip: "把一大碗粉糊全部喝完，问题不在芝麻和核桃本身，而在细粉、热冲和份量叠在了一起。把量减到半碗，再配鸡蛋补蛋白质和饱腹感，比把一大碗粉糊全部喝完更稳。" },
+      { id: "B", label: "喝半碗芝麻核桃糊，再配一个水煮蛋", effect: { bloodSugar: 10, mood: 0, energy: 9, satiety: 19 }, isPreferred: true, knowledgeTags: ["食物结构与糊化","碳水份量"], scienceTip: "半碗粉糊配一枚鸡蛋，保留了芝麻核桃的风味，也把份量和蛋白质重新搭了一遍。把量减到半碗，再配鸡蛋补蛋白质和饱腹感，比把一大碗粉糊全部喝完更稳。" },
     ],
   },
   {
-    id: 4, group: "breakfast", title: "面包房", description: "路过面包房，橱窗里摆着「无糖全麦」面包。",
+    id: 4, group: "breakfast", title: "面包房", description: "路过面包房，橱窗里摆着各种各样的面包。",
     image: "/images/s-outside.png",
     choices: [
-      { label: "买一个「无糖全麦」面包", effect: { bloodSugar: 22, energy: 0, satiety: 20, mood: 5 }, scienceTip: "“无糖”和“全麦”很会抢镜，但真正的答案藏在配料表里。“无糖”通常只说明没有额外添加某类糖，面包里的淀粉和总碳水依然在。看全麦粉排位、膳食纤维和每份碳水，比只看包装正面更靠谱。" },
-      { label: "买两个纯肉包，吃肉馅", effect: { bloodSugar: 5, energy: 5, satiety: 20, mood: -5 }, scienceTip: "只吃肉馅确实少了面皮里的精制淀粉，但蛋白质也会刺激一定的胰岛素反应，脂肪还可能让餐后血糖来得更晚。更现实的玩法是吃一个完整肉包，再配无糖饮品或蔬菜，既不浪费也不用走极端。" },
+      { id: "A", label: "选包装写着“无糖全麦”的面包，配咖啡", effect: { bloodSugar: 30, mood: 9, energy: -8, satiety: 20 }, isPreferred: false, knowledgeTags: ["食品标签","混合餐搭配"], scienceTip: "“无糖全麦”只是包装线索，不代表没有淀粉。看全麦粉是否排在配料表前面，再配一枚鸡蛋，比只看正面标签更能兼顾碳水质量、蛋白质和饱腹感。" },
+      { id: "B", label: "选全麦粉排第一的面包，配一枚鸡蛋", effect: { bloodSugar: 9, mood: 0, energy: 13, satiety: 28 }, isPreferred: true, knowledgeTags: ["食品标签","混合餐搭配"], scienceTip: "先看全麦粉排位，再配一枚鸡蛋，比只认“无糖全麦”更可靠。“无糖”不等于没有淀粉，配料更简单、全麦粉更靠前，通常更耐饿。" },
     ],
   },
   {
     id: 5, group: "breakfast", title: "传统摊位", description: "街边传统早餐摊，豆浆飘香，油条刚出锅。",
     image: "/images/s-outside.png",
     choices: [
-      { label: "豆浆配两根油条，经典组合", effect: { bloodSugar: 25, energy: -10, satiety: 35, mood: 15 }, scienceTip: "油条是精制面糊经过高温油炸形成的“淀粉＋脂肪”组合，两根下去，碳水和能量密度都不低。豆浆油条不用从人生里删除，把油条减到半根或一根、豆浆选无糖，经典组合就轻松多了。" },
-      { label: "咸豆腐脑，外加一小块蒸红薯", effect: { bloodSugar: 12, energy: 12, satiety: 30, mood: 8 }, scienceTip: "豆腐脑提供大豆蛋白，小块红薯补上主食；红薯的血糖反应会随品种、烹调方式和份量变化。咸口豆腐脑少糖少重卤，再把红薯控制在一小块，这份早餐就很扎实。" },
+      { id: "A", label: "无糖豆浆配两根油条，经典组合", effect: { bloodSugar: 29, mood: 23, energy: -10, satiety: 39 }, isPreferred: false, knowledgeTags: ["糖脂组合","碳水份量"], scienceTip: "无糖豆浆没有额外加糖，却不会抵消两根油条带来的淀粉、油脂和份量。油条是精制面糊经高温油炸形成的“淀粉＋脂肪”组合。豆腐脑和茶叶蛋补上蛋白质，油条减到半根又保留传统早餐的口味。控糖不是戒掉油条，而是看份量和整顿饭的结构。" },
+      { id: "B", label: "咸豆腐脑配一枚茶叶蛋，再吃半根油条", effect: { bloodSugar: 14, mood: 6, energy: 14, satiety: 34 }, isPreferred: true, knowledgeTags: ["糖脂组合","碳水份量"], scienceTip: "豆腐脑和茶叶蛋补蛋白质，半根油条保留口味又控制份量。油条仍是高温油炸的“淀粉＋脂肪”组合；控糖不是戒掉它，而是看整顿早餐的结构。" },
     ],
   },
   {
     id: 6, group: "breakfast", title: "肠胃不适", description: "胃有点不舒服，需要吃点温和的。",
     image: "/images/s-morning.png",
     choices: [
-      { label: "喝碗熬得极软烂的白米粥养胃", effect: { bloodSugar: 25, energy: -5, satiety: 25, mood: 10 }, scienceTip: "白粥看着清淡，血糖反应却未必清淡。米粒熬得越软烂，淀粉糊化越充分，淀粉酶通常越容易把它分解。少盛一点，再配蒸蛋或豆腐，清淡和耐饿就能同时保住。" },
-      { label: "勉强吃几口蒸蛋和清炒嫩青菜", effect: { bloodSugar: 5, energy: 5, satiety: 15, mood: -5 }, scienceTip: "蒸蛋和嫩青菜对不少人来说更清爽，也补进了蛋白质和低淀粉蔬菜。肠胃不舒服时，先以身体能接受为准；持续疼痛、呕吐或明显不适，就别靠菜单硬扛，及时就医。" },
+      { id: "A", label: "一大碗熬得软烂的白粥，配一点咸菜", effect: { bloodSugar: 33, mood: 14, energy: -13, satiety: 29 }, isPreferred: false, knowledgeTags: ["食物结构与糊化","混合餐搭配"], scienceTip: "软烂白粥确实好入口，但淀粉糊化更充分，消化通常更快。单独一大碗再配咸菜，碳水集中、蛋白质少；换小碗并加蒸蛋和嫩青菜更完整。胃不适仍以个人耐受为先。" },
+      { id: "B", label: "小碗白粥，配一份蒸蛋和一小碟嫩青菜", effect: { bloodSugar: 9, mood: 0, energy: 9, satiety: 19 }, isPreferred: true, knowledgeTags: ["食物结构与糊化","混合餐搭配"], scienceTip: "小碗白粥配蒸蛋和嫩青菜，既照顾胃口，也避免让这顿饭只剩大量软烂淀粉。白粥熬得软烂，淀粉糊化更充分；单独一大碗再配咸菜，碳水集中而蛋白质少。改成小碗，再加蒸蛋和嫩青菜，更容易吃得舒服又完整；胃不适时仍要把个人耐受放在前面。" },
     ],
   },
   {
     id: 7, group: "breakfast", title: "酒店自助", description: "酒店自助早餐，各种食物摆满台面。", weekendOnly: true,
     image: "/images/s-breakfast.jpg",
     choices: [
-      { label: "先来一大盘西瓜和哈密瓜开胃", effect: { bloodSugar: 20, energy: 0, satiety: 10, mood: 10 }, scienceTip: "水果没做错什么，一大盘才是这局的隐藏变量。西瓜水分多，单份碳水不算夸张；空腹开吃却很容易越吃越多，把正餐前的小水果吃成了主食份量。先取一小碟，吃完再去拿正餐。" },
-      { label: "先取蔬菜、蛋和肉，最后才吃水果", effect: { bloodSugar: 12, energy: 15, satiety: 35, mood: 8 }, scienceTip: "先吃蔬菜和蛋白质，就像先给这顿饭铺了一层“减速网”：纤维、蛋白质和脂肪会改变胃排空及后续碳水的吸收节奏，餐后曲线往往更平缓。顺序加成之后，水果和主食的份量依然要算进这顿饭。" },
+      { id: "A", label: "水果富含纤维，先盛满一盘水果再吃别的", effect: { bloodSugar: 27, mood: 18, energy: -4, satiety: 14 }, isPreferred: false, knowledgeTags: ["进食顺序","水果形态"], scienceTip: "水果有纤维，但一大盘先下肚，糖和总份量仍会集中到餐前。空腹先吃大量甜水果，仍会把不少碳水集中在餐前；先吃蛋和蔬菜，纤维、蛋白质和脂肪会改变后续碳水的吸收节奏，再把水果控制为小份，餐后血糖通常更平缓。" },
+      { id: "B", label: "这些水果糖分也要算进一餐，先吃蛋和蔬菜，最后留一小碟水果", effect: { bloodSugar: 14, mood: 6, energy: 19, satiety: 39 }, isPreferred: true, knowledgeTags: ["进食顺序","水果形态"], scienceTip: "先吃蛋和蔬菜，再把水果留成小碟，是在调整顺序和份量。水果虽有纤维，一大盘先下肚仍会集中碳水；纤维和蛋白质能让后续吸收更平缓。" },
     ],
   },
   {
     id: 8, group: "breakfast", title: "晨练", description: "想趁早晨运动，计划去跑步。",
     image: "/images/s-exercise.png",
     choices: [
-      { label: "空腹直接去跑步，控糖又燃脂", effect: { bloodSugar: 10, energy: -20, satiety: -15, mood: 0 }, scienceTip: "空腹跑步会增加当次脂肪氧化，长期减脂则更看整体能量和能否持续。运动强度上来后，肝糖原和压力激素也会参与供能；一旦头晕、发抖或乏力，就该停下来补给。" },
-      { label: "喝半杯牛奶，吃两口苹果再出发", effect: { bloodSugar: 8, energy: 12, satiety: 8, mood: 5 }, scienceTip: "半杯牛奶和两口苹果像给晨跑加了个软启动，补进少量碳水和蛋白质，尤其适合已经有点饿的人。重点是让你胃里舒服、有力气完成训练；份量不大，也不会变成沉重的一餐。" },
+      { id: "A", label: "空腹直接去跑步，控糖又燃脂", effect: { bloodSugar: 26, mood: 4, energy: -24, satiety: -15 }, isPreferred: false, knowledgeTags: ["运动与补能","规律进餐"], scienceTip: "空腹跑步可能增加当次脂肪氧化，却不等于长期更减脂或控糖。强度上来后更易乏力、头晕，压力激素也可能使血糖短暂上升；跑前少量牛奶和苹果更稳妥。" },
+      { id: "B", label: "喝半杯牛奶，吃两口苹果再出发", effect: { bloodSugar: 6, mood: 5, energy: 14, satiety: 10 }, isPreferred: true, knowledgeTags: ["运动与补能","规律进餐"], scienceTip: "少量牛奶和苹果能在跑前补一点碳水和蛋白质，不会变成沉重一餐。空腹运动不等于长期更减脂；已经饥饿时，先补一点通常更利于训练安全。" },
     ],
   },
   {
     id: 9, group: "breakfast", title: "极简早餐", description: "想吃极简早餐，两个选择都看起来很健康。",
     image: "/images/s-breakfast.jpg",
     choices: [
-      { label: "泡一碗无糖纯燕麦片，加一把蓝莓", effect: { bloodSugar: 18, energy: 8, satiety: 25, mood: 8 }, scienceTip: "燕麦里的β-葡聚糖能增加黏度、延缓消化；即食燕麦被切得更碎、加工更充分，血糖反应通常又比完整燕麦粒更快。若吃完很快又饿，再加无糖酸奶或坚果，把蛋白质和脂肪补上。" },
-      { label: "用黄油煎两个鸡蛋，配半个牛油果", effect: { bloodSugar: 3, energy: 12, satiety: 30, mood: 3 }, scienceTip: "鸡蛋和牛油果提供蛋白质、脂肪和纤维，确实很扛饿，但这顿几乎没有主食。按当天的活动量补一点全谷物或水果，通常会更均衡，也更容易把精力接到中午。" },
+      { id: "A", label: "燕麦富含膳食纤维，多泡一碗即食燕麦和蓝莓", effect: { bloodSugar: 32, mood: 14, energy: -7, satiety: 21 }, isPreferred: false, knowledgeTags: ["食物结构与糊化","混合餐搭配"], scienceTip: "燕麦的β-葡聚糖能增加黏度，但即食燕麦颗粒更细，淀粉通常消化更快。单独一大碗蛋白质也可能不足；鸡蛋配半个馒头反而把蛋白质和适量主食搭得更清楚。" },
+      { id: "B", label: "用黄油煎两个鸡蛋，配半个馒头", effect: { bloodSugar: 5, mood: 0, energy: 23, satiety: 34 }, isPreferred: true, knowledgeTags: ["食物结构与糊化","混合餐搭配"], scienceTip: "鸡蛋加半个馒头看起来不如燕麦“健康”，却把蛋白质和适量主食搭得更清楚。燕麦的 β-葡聚糖有助增加食糜黏度，但加工方式和整餐结构同样重要。鸡蛋补上蛋白质，半个馒头保留适量主食；少量黄油主要负责口感，关键仍是整餐份量。" },
     ],
   },
   {
     id: 10, group: "breakfast", title: "晨起的心慌", description: "早上刚睁眼，你突然觉得心跳加速，身体有轻微的颤抖。",
     image: "/images/s-morning.png",
     choices: [
-      { label: "不管它，忍着洗漱，到了公司再吃早饭", effect: { bloodSugar: 0, energy: -20, satiety: -10, mood: -15 }, scienceTip: "晨起心慌可能来自低血糖，也可能与脱水、焦虑、心律问题或其他状况有关。先坐下，有条件就测量；症状持续、加重，或伴随胸痛、呼吸困难和晕厥感时，别硬挤通勤，及时求助。" },
-      { label: "在床头柜摸出一小罐纯牛奶喝掉，再起床", effect: { bloodSugar: 8, energy: 10, satiety: 10, mood: 5 }, scienceTip: "牛奶里的乳糖能提供一些碳水，蛋白质和液体也可能让空腹的胃舒服一点。喝完仍不舒服，就别继续猜血糖；测量、记录症状，必要时求助更靠谱。" },
+      { id: "A", label: "先洗漱出门，打算到了公司再吃早餐", effect: { bloodSugar: -11, mood: -19, energy: -28, satiety: -10 }, isPreferred: false, knowledgeTags: ["低血糖识别与处理"], lowSugarRisk: true, scienceTip: "心慌手抖时继续空腹赶路，会让不适和风险延长。晨起症状也可能来自紧张、咖啡因等，不能只凭感觉诊断低血糖；先坐下，吃少量易消化碳水，缓解后再补正常早餐，持续加重就求助。" },
+      { id: "B", label: "先坐下吃半根香蕉，缓过来再准备早餐", effect: { bloodSugar: 10, mood: 5, energy: 14, satiety: 10 }, isPreferred: true, knowledgeTags: ["低血糖识别与处理"], scienceTip: "先坐下吃半根香蕉，是先补少量易消化碳水，再准备正常早餐。晨起心慌手抖不一定就是低血糖；若症状持续或加重，不要继续赶路，应及时测量或求助。" },
     ],
   },
   {
     id: 11, group: "breakfast", title: "嘴巴很寂寞", description: "刚吃完早饭不到 1 个半小时，坐在电脑前的你突然觉得嘴巴很寂寞，总想找点吃的。",
     image: "/images/s-morning.png",
     choices: [
-      { label: "吃一颗糖，防患于未然", effect: { bloodSugar: 15, energy: -3, satiety: 2, mood: 5 }, scienceTip: "饭后一个多小时突然想吃糖，可能是嘴馋、压力、习惯，也可能是真饿；光凭感觉还分不清是不是低血糖。先停一下感受身体，有条件就测量，再决定要不要补糖。" },
-      { label: "接一杯温水，一饮而尽", effect: { bloodSugar: 0, energy: 2, satiety: 2, mood: 0 }, scienceTip: "一杯水可以给嘴馋按下暂停键。十几分钟后如果仍然确实饿，就安排一份正常加餐；真正的饥饿需要食物，不需要继续靠喝水硬压。" },
+      { id: "A", label: "吃两块无糖苏打饼干，继续工作", effect: { bloodSugar: 19, mood: 9, energy: -5, satiety: 4 }, isPreferred: false, knowledgeTags: ["低血糖识别与处理","饥饿觉察"], scienceTip: "无糖苏打饼干不甜，仍以精制淀粉为主；刚吃完早餐时嘴馋也不等于缺糖。先喝水、离开零食十分钟，仍明显饥饿再安排正常加餐，比无意识续饼干更稳。" },
+      { id: "B", label: "先喝杯水，十分钟后再判断要不要加餐", effect: { bloodSugar: 0, mood: 0, energy: 4, satiety: 9 }, isPreferred: true, knowledgeTags: ["低血糖识别与处理","饥饿觉察"], scienceTip: "先喝水等十分钟，是在区分嘴馋和真正饥饿，并非一直忍。“无糖”饼干仍是精制淀粉；之后仍饿，再吃酸奶、牛奶或坚果等正常加餐。" },
     ],
   },
 ]
@@ -177,112 +196,112 @@ const LUNCH_EVENTS: GameEvent[] = [
     id: 12, group: "lunch", title: "减脂素食", description: "食堂里的「减脂素食」专区。",
     image: "/images/s-lunch-3.jpg",
     choices: [
-      { label: "清炒土豆丝、凉拌藕片、蒸南瓜", effect: { bloodSugar: 28, energy: -8, satiety: 30, mood: 10 }, scienceTip: "土豆、莲藕、南瓜均为高淀粉根茎类，三者同吃等于摄入了大量升糖碳水，被「蔬菜」标签误导是最常见的控糖陷阱。" },
-      { label: "蒜蓉西兰花和炒小白菜，外加卤蛋", effect: { bloodSugar: 5, energy: 5, satiety: 25, mood: 0 }, scienceTip: "西兰花、小白菜和鸡蛋把低淀粉蔬菜与蛋白质配齐了，主食却还缺席。根据下午的活动量加一点杂粮饭或豆类，让这顿饭既稳，也有足够能量。" },
+      { id: "A", label: "土豆丝、藕片和南瓜各夹一份", effect: { bloodSugar: 34, mood: 14, energy: -14, satiety: 38 }, isPreferred: false, knowledgeTags: ["碳水识别","混合餐搭配"], scienceTip: "土豆、藕和南瓜都能贡献淀粉，三样各一份会把多份主食叠成“蔬菜”。改成绿叶菜和卤蛋，再配半份杂粮饭，蔬菜、蛋白质和主食会更清楚。" },
+      { id: "B", label: "绿叶菜、卤蛋，再配半份杂粮饭", effect: { bloodSugar: 5, mood: 0, energy: 9, satiety: 29 }, isPreferred: true, knowledgeTags: ["碳水识别","混合餐搭配"], scienceTip: "绿叶菜、卤蛋和半份杂粮饭，让蔬菜、蛋白质和主食各自归位。土豆、藕、南瓜虽来自植物，却都含淀粉；三样一起夹，很容易把主食叠多。" },
     ],
   },
   {
     id: 13, group: "lunch", title: "外卖盖饭", description: "外卖盖饭到了，香气扑鼻。",
     image: "/images/s-lunch.png",
     choices: [
-      { label: "饭菜拌在一起，大口大口吃", effect: { bloodSugar: 22, energy: -8, satiety: 35, mood: 10 }, scienceTip: "饭菜和酱汁拌在一起，很容易几大口就吃掉比预想更多的米饭。先分出一部分米饭，再慢一点嚼，既看得见份量，也能给饱腹感一点赶上来的时间。" },
-      { label: "先把配菜和肉吃完，最后再吃米饭", effect: { bloodSugar: 12, energy: 12, satiety: 35, mood: 5 }, scienceTip: "先菜和肉、后米饭，是个简单好用的顺序加成。纤维、蛋白质和脂肪会改变胃排空及碳水吸收节奏，餐后血糖和胰岛素反应往往更平缓；实际效果会随这顿饭和个人状态变化。" },
+      { id: "A", label: "盖饭已经荤素都有，直接拌匀大口吃更省时间", effect: { bloodSugar: 29, mood: 18, energy: -10, satiety: 39 }, isPreferred: false, knowledgeTags: ["进食顺序","碳水份量"], scienceTip: "盖饭拌匀大口吃，方便是真的，但酱汁和米饭也会因此更容易快速入口。酱汁拌匀后米饭更顺口，容易吃快、吃多；先吃蔬菜和肉，再慢慢吃米饭，纤维和蛋白质会改变胃排空及淀粉吸收节奏，餐后曲线通常更平缓。" },
+      { id: "B", label: "先吃配菜和肉，再把米饭分成两次慢慢吃", effect: { bloodSugar: 14, mood: 0, energy: 14, satiety: 39 }, isPreferred: true, knowledgeTags: ["进食顺序","碳水份量"], scienceTip: "先吃配菜和肉、再分两次吃米饭，改变的是进食顺序和速度，不是把盖饭改成另一道菜。酱汁拌匀后米饭更顺口，容易吃快、吃多；先吃蔬菜和肉，再慢慢吃米饭，纤维和蛋白质会改变胃排空及淀粉吸收节奏，餐后曲线通常更平缓。" },
     ],
   },
   {
     id: 14, group: "lunch", title: "汤泡饭", description: "米饭有点干，旁边有一大碗汤。",
     image: "/images/s-lunch-3.jpg",
     choices: [
-      { label: "一口饭配一口汤顺下去", effect: { bloodSugar: 24, energy: -8, satiety: 35, mood: 10 }, scienceTip: "米饭在蒸煮时已经完成了大部分糊化，泡汤后会继续吸水变软，几口就能顺下去。一项小型随机交叉试验中，白米饭配液体喝或泡着吃时，胃排空更快、餐后血糖反应也更高；食物形态和进食速度都是关键。" },
-      { label: "吃干饭，饭后40分钟再喝汤", effect: { bloodSugar: 14, energy: 10, satiety: 35, mood: 5 }, scienceTip: "干饭慢慢嚼，保留颗粒和咀嚼过程，在这道题里是更稳的选择。喝汤不用死守40分钟；如果你的CGM反复显示餐后一小时内喝水会出现二次上升，就把饮水时间当成个人变量，用同一顿饭重复比较。" },
+      { id: "A", label: "米饭太干，用热汤泡软，觉得这样更好消化", effect: { bloodSugar: 31, mood: 18, energy: -14, satiety: 39 }, isPreferred: false, knowledgeTags: ["食物结构与糊化","进食速度"], scienceTip: "米饭蒸煮时已经完成大部分糊化，泡汤后继续吸水变软，更容易少嚼、吃快。小型交叉试验观察到白米饭配液体时胃排空和餐后血糖反应更快；汤饭分开、先菜肉后米饭通常更稳。" },
+      { id: "B", label: "汤和饭分开，先吃菜和肉，再慢慢嚼米饭", effect: { bloodSugar: 15, mood: 0, energy: 14, satiety: 35 }, isPreferred: true, knowledgeTags: ["食物结构与糊化","进食速度"], scienceTip: "汤饭分开、先菜肉后米饭，能保留咀嚼并放慢进食。米饭本已糊化，泡汤后会继续吸水变软；小型交叉试验也观察到配液体时胃排空和餐后血糖反应更快。" },
     ],
   },
   {
-    id: 15, group: "lunch", title: "餐前饮品", description: "餐前看到了一瓶「0蔗糖」乳酸菌饮料。",
+    id: 15, group: "lunch", title: "餐前饮品", description: "餐前，桌上有一瓶“0蔗糖”乳酸菌饮料，也有苹果醋和水。",
     image: "/images/s-lunch.png",
     choices: [
-      { label: "喝一瓶，顺手饭前来一瓶益生菌", effect: { bloodSugar: 20, energy: -3, satiety: 3, mood: 8 }, scienceTip: "“0蔗糖”只说明没有添加蔗糖，乳糖、葡萄糖浆或其他碳水仍可能在配方里。直接看营养成分表的“碳水化合物”和整瓶份量，最容易判断这瓶饮料会带来多少碳水。" },
-      { label: "喝一杯温水加几滴苹果醋", effect: { bloodSugar: 2, energy: 2, satiety: 2, mood: 0 }, scienceTip: "醋酸可能减慢部分淀粉消化，让某些餐食的餐后反应更平缓；实际效果会随剂量、食物和个人状态变化。喜欢就充分稀释、随餐少量用，同时照顾胃和牙齿。" },
+      { id: "A", label: "“0蔗糖”应该更稳，餐前喝完整瓶乳酸菌饮料", effect: { bloodSugar: 27, mood: 14, energy: -5, satiety: 9 }, isPreferred: false, knowledgeTags: ["食品标签","醋与餐后血糖"], scienceTip: "“0蔗糖”不等于没有乳糖、葡萄糖或其他碳水，仍要看营养表和整瓶份量。充分稀释的少量苹果醋对部分高GI餐可能有有限帮助，但不能替代控制总碳水，也要照顾胃和牙齿。" },
+      { id: "B", label: "苹果醋听说能缓和餐后血糖，充分稀释后喝一小杯", effect: { bloodSugar: 9, mood: 0, energy: 9, satiety: 13 }, isPreferred: true, knowledgeTags: ["食品标签","醋与餐后血糖"], scienceTip: "充分稀释的小杯苹果醋可能让部分高GI餐的餐后反应更平缓，但效果有限，也要照顾胃和牙齿。“0蔗糖”饮料仍可能含其他碳水，不能只看包装。" },
     ],
   },
   {
     id: 16, group: "lunch", title: "压力下的午餐", description: "上午被老板狠批了一顿，中午情绪跌入谷底，你需要吃点好的来拯救自己。", weekdayOnly: true,
     image: "/images/s-lunch-3.jpg",
     choices: [
-      { label: "点一份「健康」果麦碗（蜂蜜脆燕麦＋果泥）", effect: { bloodSugar: 22, energy: 0, satiety: 20, mood: 10 }, scienceTip: "压力大时不需要把主食拿掉，但也别让“轻食”两个字替你看配方。果泥、蜂蜜和脆燕麦叠在一起，碳水不少，蛋白质却可能不够；甜味能短暂安慰情绪，这顿饭的结构却未必接得住整个下午。" },
-      { label: "点一个单层牛肉汉堡，保留面包，少酱再加蔬菜", effect: { bloodSugar: 15, energy: 12, satiety: 30, mood: 10 }, scienceTip: "压力大的这顿，主食不用缺席。单层牛肉提供蛋白质，保留面包补上适量碳水，再加蔬菜、少点酱，比“双层肉、不吃主食”更像一顿完整的饭：有满足感，也更能把下午的状态接住。" },
+      { id: "A", label: "果麦碗看起来轻盈，用蜂蜜脆燕麦和果泥奖励自己", effect: { bloodSugar: 27, mood: 18, energy: -4, satiety: 20 }, isPreferred: false, knowledgeTags: ["压力进食","混合餐搭配"], scienceTip: "果泥、蜂蜜和脆燕麦叠在一碗里，会集中多种碳水，蛋白质却可能不足。压力大时不必拿掉主食；保留面包的单层牛肉汉堡少酱加菜，反而更像完整午餐。" },
+      { id: "B", label: "选单层牛肉汉堡，保留面包、少酱再加一份蔬菜", effect: { bloodSugar: 15, mood: 14, energy: 19, satiety: 34 }, isPreferred: true, knowledgeTags: ["压力进食","混合餐搭配"], scienceTip: "单层牛肉汉堡保留适量面包，再少酱加菜，把碳水、蛋白质和蔬菜都留在一顿里。果泥、蜂蜜和脆燕麦看似轻盈，却可能叠加碳水而缺少蛋白质。" },
     ],
   },
   {
-    id: 17, group: "lunch", title: "牛肉面", description: "来一碗牛肉面吧。",
+    id: 17, group: "lunch", title: "牛肉面", description: "面馆里，牛肉面可以加青菜和卤蛋。",
     image: "/images/s-lunch.png",
     choices: [
-      { label: "呼噜噜连汤带面，好吃又暖胃", effect: { bloodSugar: 25, energy: -10, satiety: 38, mood: 15 }, scienceTip: "精制面条提供较快消化的淀粉，油多盐高的汤底又把这碗面的能量密度往上推；吃得太快、太撑，也容易让下午状态发沉。少喝汤、留一点面，再加份青菜，满足感和结构都保住了。" },
-      { label: "先加烫菜和煎蛋，吃完配菜再动面", effect: { bloodSugar: 15, energy: 12, satiety: 35, mood: 8 }, scienceTip: "先吃蔬菜、蛋和牛肉，再慢慢动面，纤维与蛋白质会改变胃排空和后续淀粉的吸收节奏。这样一调，整碗面的结构更完整，餐后曲线也通常更友好。" },
+      { id: "A", label: "牛肉面有肉有汤，直接拌匀趁热吃完", effect: { bloodSugar: 31, mood: 19, energy: -14, satiety: 44 }, isPreferred: false, knowledgeTags: ["碳水份量","进食顺序"], scienceTip: "牛肉和汤不能改变整碗精制面条是主要碳水；份量大、吃得快，餐后血糖更易快速上升。先吃青菜、蛋和牛肉，再慢慢吃大半碗面，通常更平缓。" },
+      { id: "B", label: "先吃青菜、卤蛋和牛肉，再慢慢吃大半碗面", effect: { bloodSugar: 19, mood: 6, energy: 19, satiety: 47 }, isPreferred: true, knowledgeTags: ["碳水份量","进食顺序"], scienceTip: "先吃青菜、蛋和牛肉，再慢慢吃大半碗面，是在调整顺序和份量。纤维与蛋白质会改变后续淀粉吸收；少喝浓汤、留一点面，也让结构更完整。" },
     ],
   },
   {
     id: 18, group: "lunch", title: "沙拉酱", description: "沙拉旁边放着两种酱汁。",
     image: "/images/s-lunch-3.jpg",
     choices: [
-      { label: "焙煎芝麻酱和千岛酱全倒进去拌匀", effect: { bloodSugar: 18, energy: -5, satiety: 25, mood: 12 }, scienceTip: "两包商业沙拉酱会把添加糖、脂肪和总能量一起倒进这碗菜里。先放一小勺，拌匀尝过再续，让酱汁负责提味，不要从配角变成主角。" },
-      { label: "什么酱都不用，或只用一勺橄榄油", effect: { bloodSugar: 8, energy: 8, satiety: 25, mood: 0 }, scienceTip: "少酱或用一点橄榄油都可以，脂肪会帮助脂溶性维生素吸收，也可能增加满足感。一勺负责提味就够了，份量和整顿饭的搭配仍然算数。" },
+      { id: "A", label: "两种酱各来一勺，味道更丰富，单份都不算多", effect: { bloodSugar: 24, mood: 19, energy: -5, satiety: 29 }, isPreferred: false, knowledgeTags: ["隐藏糖与酱料","碳水份量"], scienceTip: "两种酱各一勺很容易让人觉得都不多，可总量会在不知不觉中相加。两种酱各一勺，看起来每种都不多，叠加后仍可能带来额外糖、淀粉、脂肪和能量；只选一种并蘸着吃，更容易看见实际用量，也能保留口感。" },
+      { id: "B", label: "只选一种酱，蘸着吃，吃到够味就停", effect: { bloodSugar: 10, mood: 0, energy: 14, satiety: 29 }, isPreferred: true, knowledgeTags: ["隐藏糖与酱料","碳水份量"], scienceTip: "只选一种、蘸着吃，没有牺牲味道，却让实际用量更容易看见。两种酱各一勺，看起来每种都不多，叠加后仍可能带来额外糖、淀粉、脂肪和能量；只选一种并蘸着吃，更容易看见实际用量，也能保留口感。" },
     ],
   },
   {
-    id: 19, group: "lunch", title: "饿过头", description: "开会拖堂到下午一点半，你现在饿得手脚发软，胃部痉挛。", weekdayOnly: true,
+    id: 19, group: "lunch", title: "饿过头", description: "会议拖到下午一点半，你饿得手脚发软，胃也不舒服。", weekdayOnly: true,
     image: "/images/s-low-sugar.png",
     choices: [
-      { label: "买一杯热腾腾的甜豆浆或奶茶，先喝下垫胃", effect: { bloodSugar: 28, energy: -12, satiety: 10, mood: 15 }, scienceTip: "饿到发软时，大杯甜饮不需要咀嚼，往往喝得又快又多，糖分也容易迅速吸收。先坐稳，尽快吃一顿有主食、有蛋白质的正常饭，比拿奶茶当急救包更可靠。" },
-      { label: "从抽屉里翻出一小把巴旦木干嚼，强忍15分钟", effect: { bloodSugar: 3, energy: 5, satiety: 12, mood: -5 }, scienceTip: "一小把巴旦木含脂肪、蛋白质和纤维，能先把“饿急眼”的速度降下来，后续正餐也更容易慢慢吃。不过不用强忍15分钟完成仪式，缓过来后还是要好好吃饭。" },
+      { id: "A", label: "先喝一杯甜豆浆，感觉来劲后再去吃午饭", effect: { bloodSugar: 38, mood: 23, energy: -19, satiety: 26 }, isPreferred: false, knowledgeTags: ["低血糖识别与处理","规律进餐"], scienceTip: "甜豆浆能迅速补糖，却不是完整午饭。饿到发软不一定就是低血糖，也不适合继续拖；先坐下补少量碳水和蛋白质，再正常吃午饭。症状明显、反复或加重时应求助。" },
+      { id: "B", label: "先坐下，吃半根香蕉配小盒牛奶，缓过来再吃完整午饭", effect: { bloodSugar: 18, mood: 5, energy: 10, satiety: 8 }, isPreferred: true, knowledgeTags: ["低血糖识别与处理","规律进餐"], scienceTip: "香蕉配牛奶先补少量碳水和蛋白质，再吃完整午饭，比用大杯甜饮继续拖更稳妥。饿到发软不自动等于低血糖；症状明显、反复或加重时应及时求助。" },
     ],
   },
   {
     id: 20, group: "lunch", title: "便利店简餐", description: "便利店简餐，两种三明治。",
     image: "/images/s-lunch-3.jpg",
     choices: [
-      { label: "买一个奶油果酱夹心吐司三明治", effect: { bloodSugar: 22, energy: -5, satiety: 20, mood: 10 }, scienceTip: "白面包和果酱是精制淀粉加游离糖的组合，质地又软，很容易几口就吃完，蛋白质却不多。偶尔吃没关系，配牛奶、鸡蛋或无糖酸奶，会更像一顿完整早餐。" },
-      { label: "买一个全麦金枪鱼三明治", effect: { bloodSugar: 12, energy: 10, satiety: 28, mood: 5 }, scienceTip: "全麦面包的纤维配上金枪鱼蛋白质，通常比奶油果酱吐司更耐饿、血糖反应也更平缓。再看一眼全麦原料排位和酱料，别让蛋黄酱悄悄接管整份三明治。" },
+      { id: "A", label: "奶油果酱吐司份量不大，再配无糖咖啡平衡甜味", effect: { bloodSugar: 29, mood: 14, energy: -9, satiety: 20 }, isPreferred: false, knowledgeTags: ["食品标签","混合餐搭配"], scienceTip: "奶油、果酱和吐司的碳水脂肪不会因为旁边是一杯无糖咖啡就被抵消。无糖咖啡不会抵消吐司果酱里的精制淀粉和游离糖。全麦金枪鱼三明治同时有主食、纤维和蛋白质，通常更耐饿；仍要看全麦原料排位、酱料和整份大小。" },
+      { id: "B", label: "选全麦金枪鱼三明治，配一杯无糖茶", effect: { bloodSugar: 14, mood: 1, energy: 14, satiety: 30 }, isPreferred: true, knowledgeTags: ["食品标签","混合餐搭配"], scienceTip: "全麦金枪鱼三明治把主食、纤维和蛋白质放在了一份里，无糖茶只负责饮品。无糖咖啡不会抵消吐司果酱里的精制淀粉和游离糖。全麦金枪鱼三明治同时有主食、纤维和蛋白质，通常更耐饿；仍要看全麦原料排位、酱料和整份大小。" },
     ],
   },
   {
     id: 21, group: "lunch", title: "饭前状态", description: "脑子里还在想工作，到了饭点。",
     image: "/images/s-lunch.png",
     choices: [
-      { label: "边刷手机边吃，多任务处理", effect: { bloodSugar: 18, energy: -5, satiety: 30, mood: 5 }, scienceTip: "边刷手机边吃，注意力被切走，更容易吃得快，也可能让你记不清自己已经吃了多少。把手机放下、慢一点吃，更容易及时感觉到饱。" },
-      { label: "放下手机，做三个深呼吸，专心吃饭", effect: { bloodSugar: 15, energy: 8, satiety: 30, mood: 8 }, scienceTip: "三个深呼吸，正好让人从工作频道切回吃饭频道。慢一点、尝到味道，也更容易觉察自己什么时候饱；不需要复杂仪式，这个短暂停顿就很实用。" },
+      { id: "A", label: "边回工作消息边吃，省出一点午休时间", effect: { bloodSugar: 21, mood: 5, energy: -5, satiety: 30 }, isPreferred: false, knowledgeTags: ["进食速度","饥饿觉察"], scienceTip: "边回消息边吃不会直接升糖，但很容易让速度和份量失去感觉。先放下手机、做几次呼吸，不是复杂仪式，而是把注意力切回这顿饭；吃慢一点，更容易在舒服时停下来。" },
+      { id: "B", label: "先放下手机，做三次深呼吸再开吃", effect: { bloodSugar: 15, mood: 10, energy: 14, satiety: 30 }, isPreferred: true, knowledgeTags: ["进食速度","饥饿觉察"], scienceTip: "放下手机做几次呼吸，是给这顿饭一个清晰开始，也让饱腹信号有机会被注意到。先放下手机、做几次呼吸，不是复杂仪式，而是把注意力切回这顿饭；吃慢一点，更容易在舒服时停下来。" },
     ],
   },
   {
     id: 22, group: "lunch", title: "减脂期的炒菜", description: "减脂期，在想午饭怎么吃。",
     image: "/images/s-lunch-3.jpg",
     choices: [
-      { label: "要求「纯水煮，一滴油不许放」", effect: { bloodSugar: 8, energy: -5, satiety: 20, mood: -10 }, scienceTip: "一滴油都不放，看起来很自律，长期极低脂却会影响脂溶性维生素A、D、E、K的吸收，饭也更难吃得满足。用一点油，把菜做得好吃、让饮食能坚持，通常比追求“绝对无油”更重要。" },
-      { label: "用橄榄油猛火炒一盘小白菜，加一份肉", effect: { bloodSugar: 5, energy: 10, satiety: 30, mood: 8 }, scienceTip: "蔬菜、肉和适量橄榄油是很稳的组合：脂肪能帮助脂溶性维生素吸收，也会改变胃排空和饱腹感。油量绕一小圈就够了，既好吃，也给整顿饭留出合适的能量空间。" },
+      { id: "A", label: "水煮鸡胸和蔬菜，配低脂沙拉汁，尽量不碰油和主食", effect: { bloodSugar: 10, mood: -18, energy: -13, satiety: 12 }, isPreferred: false, knowledgeTags: ["混合餐搭配","可持续饮食"], scienceTip: "水煮、低脂、无主食看起来很克制，却可能把一顿饭需要的能量和结构一起削掉。少量油炒菜配瘦肉，再留半份杂粮饭，碳水、蛋白质、脂肪和纤维都在场，更像能长期吃下去的一顿饭。" },
+      { id: "B", label: "少量油炒青菜和瘦肉，配半份杂粮饭", effect: { bloodSugar: 10, mood: 10, energy: 14, satiety: 30 }, isPreferred: true, knowledgeTags: ["混合餐搭配","可持续饮食"], scienceTip: "少量油、瘦肉、青菜和半份杂粮饭都在场，这份组合比极端清淡更像能长期坚持的控糖餐。少量油炒菜配瘦肉，再留半份杂粮饭，碳水、蛋白质、脂肪和纤维都在场，更像能长期吃下去的一顿饭。" },
     ],
   },
   {
     id: 23, group: "lunch", title: "轻食店沙拉", description: "轻食店，选什么好？",
     image: "/images/s-lunch.png",
     choices: [
-      { label: "来一份超大碗的全素田园沙拉", effect: { bloodSugar: 10, energy: -5, satiety: 20, mood: -5 }, scienceTip: "超大碗全素沙拉看着很多，但如果只有低能量蔬菜，蛋白质和主食可能不够，真饿时顶不了多久。加豆类、豆腐、鸡蛋或其他蛋白质，再留一小份主食，才更像一顿完整的饭。" },
-      { label: "沙拉减量，额外加烤鸡胸和溏心蛋", effect: { bloodSugar: 5, energy: 12, satiety: 30, mood: 8 }, scienceTip: "把沙拉缩到正常份量，再补上鸡胸和蛋，蛋白质、蔬菜和满足感终于都在线。这份搭配比一大盆纯蔬菜更完整，也更容易在减脂期长期坚持。" },
+      { id: "A", label: "蔬菜越多越顶饱，选超大碗田园沙拉加面包丁", effect: { bloodSugar: 18, mood: -9, energy: -9, satiety: 16 }, isPreferred: false, knowledgeTags: ["混合餐搭配","碳水份量"], scienceTip: "超大碗蔬菜带来很强的体积感，但面包丁和缺少蛋白质会让这份饱腹感不够持久。中碗蔬菜加鸡胸、鸡蛋和半根玉米，把蛋白质与适量主食补齐，通常比“只把菜堆高”更能稳住下午的饥饿和血糖。" },
+      { id: "B", label: "选中碗沙拉，加鸡胸、鸡蛋和半根玉米", effect: { bloodSugar: 10, mood: 8, energy: 18, satiety: 35 }, isPreferred: true, knowledgeTags: ["混合餐搭配","碳水份量"], scienceTip: "中碗沙拉加鸡胸、鸡蛋和半根玉米，体积没有最大，却把蛋白质和适量主食补齐了。中碗蔬菜加鸡胸、鸡蛋和半根玉米，把蛋白质与适量主食补齐，通常比“只把菜堆高”更能稳住下午的饥饿和血糖。" },
     ],
   },
   {
     id: 24, group: "lunch", title: "纯素网红餐", description: "打卡网红素食，两种选择。",
     image: "/images/s-lunch-3.jpg",
     choices: [
-      { label: "铺满香蕉和燕麦脆的巴西莓果碗", effect: { bloodSugar: 25, energy: -8, satiety: 18, mood: 15 }, scienceTip: "巴西莓果碗很上镜，果泥、香蕉、脆燕麦、果干和蜂蜜叠起来，也很容易变成一份甜点。食物打碎后咀嚼减少，再加上层层堆料和大份量，这碗的碳水会比看起来高得多。" },
-      { label: "含天贝、毛豆、牛油果的佛陀碗", effect: { bloodSugar: 10, energy: 12, satiety: 32, mood: 8 }, scienceTip: "天贝和毛豆补上植物蛋白与纤维，牛油果提供脂肪，这些搭配会让混合餐的消化节奏更慢。再留意酱汁和主食份量，这碗就更完整、更耐饿。" },
+      { id: "A", label: "水果和燕麦都很健康，选香蕉、燕麦脆铺满的巴西莓果碗", effect: { bloodSugar: 33, mood: 31, energy: -18, satiety: 20 }, isPreferred: false, knowledgeTags: ["隐藏糖与酱料","混合餐搭配"], scienceTip: "巴西莓果碗里的每一项单看都很健康，果泥、香蕉、燕麦脆等叠在一起时，碳水总量却会悄悄变大。佛陀碗用天贝和毛豆补蛋白质与纤维、牛油果补脂肪，再控制糙米和酱汁份量，结构通常更完整。" },
+      { id: "B", label: "选有天贝、毛豆、牛油果和糙米的佛陀碗", effect: { bloodSugar: 12, mood: 5, energy: 16, satiety: 35 }, isPreferred: true, knowledgeTags: ["隐藏糖与酱料","混合餐搭配"], scienceTip: "天贝、毛豆、牛油果和糙米各自承担蛋白质、脂肪、纤维和主食，结构更容易看清。佛陀碗用天贝和毛豆补蛋白质与纤维、牛油果补脂肪，再控制糙米和酱汁份量，结构通常更完整。" },
     ],
   },
   {
-    id: 25, group: "lunch", title: "减肥茶的背刺", description: "饭前喝了一大杯号称「阻断碳水吸收」的白芸豆减肥茶，然后只吃了一份蔬菜沙拉。",
+    id: 25, group: "lunch", title: "碳水阻断茶", description: "饭前喝了一大杯号称「阻断碳水吸收」的白芸豆减肥茶，然后只吃了一份蔬菜沙拉。",
     image: "/images/s-lunch.png",
     choices: [
-      { label: "感觉非常健康，继续保持饿肚子的状态", effect: { bloodSugar: 0, energy: -15, satiety: -12, mood: -10 }, scienceTip: "白芸豆提取物只能影响一部分淀粉消化，接不住一顿缺席的正餐。只靠一盘菜继续饿着，能量、蛋白质和主食都可能不够；保健品不该成为不吃饭的通行证。" },
-      { label: "察觉不对，赶紧去补吃了一小碗粗粮饭", effect: { bloodSugar: 12, energy: 8, satiety: 20, mood: 5 }, scienceTip: "补一小碗粗粮饭，是把缺席的主食重新拼回这顿饭。碳水和蔬菜、蛋白质一起出现时，结构更均衡，也比继续依赖减肥茶更能长期执行。" },
+      { id: "A", label: "阻断茶已经挡住碳水，午餐只吃一份蔬菜沙拉", effect: { bloodSugar: -13, mood: -14, energy: -19, satiety: -10 }, isPreferred: false, knowledgeTags: ["碳水阻断误区","规律进餐"], lowSugarRisk: true, scienceTip: "“碳水阻断”至多影响部分淀粉消化，不能替代一顿饭，也不能保证血糖不会升高。午餐只吃蔬菜，碳水、蛋白质和能量都可能不足；补杂粮饭和豆腐才完整。" },
+      { id: "B", label: "不把阻断茶算成正餐，沙拉外加半碗杂粮饭和豆腐", effect: { bloodSugar: 14, mood: 1, energy: 10, satiety: 20 }, isPreferred: true, knowledgeTags: ["碳水阻断误区","规律进餐"], scienceTip: "不把阻断茶算成正餐，再补半碗杂粮饭和豆腐，才把主食与蛋白质放回来。所谓“阻断”只能影响部分淀粉消化，不能代替真实食物。" },
     ],
   },
 ]
@@ -292,112 +311,112 @@ const AFTERNOON_EVENTS: GameEvent[] = [
     id: 26, group: "afternoon", title: "水果选择", description: "下午有点饿，看见水果和坚果。",
     image: "/images/s-tea-4.jpg",
     choices: [
-      { label: "坚果热量高，直接吃一个苹果", effect: { bloodSugar: 12, energy: 5, satiety: 10, mood: 8 }, scienceTip: "完整苹果保留了细胞结构、纤维和咀嚼感，单独当加餐也完全可以。只是如果你已经很饿，一只苹果的蛋白质和脂肪很少，可能不够扛到下一餐。" },
-      { label: "苹果和巴旦木一起吃", effect: { bloodSugar: 8, energy: 10, satiety: 15, mood: 8 }, scienceTip: "苹果负责清甜和纤维，巴旦木补上脂肪与蛋白质，这对组合通常比单吃水果更有满足感。坚果会放慢整体消化，一小把就够，既耐饿也不会让加餐变成一顿饭。" },
+      { id: "A", label: "完整苹果有纤维，吃一个就能扛到晚饭", effect: { bloodSugar: 20, mood: 14, energy: 5, satiety: 14 }, isPreferred: false, knowledgeTags: ["水果形态","混合餐搭配"], scienceTip: "完整苹果是一份不错的水果，但已经明显饥饿时，单靠它未必能撑到晚饭。无糖酸奶配少量坚果补上蛋白质和脂肪，通常更耐饿，坚果一小把就够。" },
+      { id: "B", label: "选一杯无糖酸奶，配一小把巴旦木", effect: { bloodSugar: 10, mood: 6, energy: 18, satiety: 23 }, isPreferred: true, knowledgeTags: ["水果形态","混合餐搭配"], scienceTip: "无糖酸奶配一小把坚果，份量不大，却比单吃水果多了蛋白质和脂肪。无糖酸奶配少量坚果补上蛋白质和脂肪，通常更耐饿，坚果一小把就够。" },
     ],
   },
   {
-    id: 27, group: "afternoon", title: "脑雾", description: "下午头晕眼花，包里只有一根香蕉。",
+    id: 27, group: "afternoon", title: "下午发晕", description: "下午头晕眼花，包里只有一根香蕉。",
     image: "/images/s-low-sugar.png",
     choices: [
-      { label: "立刻咬两小口香蕉垫一垫", effect: { bloodSugar: 8, energy: 10, satiety: 3, mood: 3 }, scienceTip: "两口香蕉能补一点碳水，却无法保证把任何人的血糖精准拉回安全线。头晕时先停下来、坐稳并观察；症状明显或反复出现时，有条件就测量，别只靠“像低血糖”来诊断。" },
-      { label: "香蕉太升糖，坚决不碰", effect: { bloodSugar: 0, energy: -12, satiety: -8, mood: -8 }, scienceTip: "香蕉含有容易利用的碳水，身体已经不舒服时，一味拒绝食物只会让补给继续缺席。先坐稳、适量进食并观察；情况持续或加重，就测量血糖或及时求助。" },
+      { id: "A", label: "香蕉升糖快，先吃几口再坐下观察", effect: { bloodSugar: 10, mood: 5, energy: 18, satiety: 5 }, isPreferred: true, knowledgeTags: ["低血糖识别与处理","运动与补能"], scienceTip: "头晕时先坐稳、吃几口香蕉，能补少量易利用的碳水；继续观察，不要边走边硬撑。但头晕不等于已经确诊低血糖，症状持续或加重时应尽快测量或求助。" },
+      { id: "B", label: "担心香蕉糖多，先喝水休息，把香蕉留到晚餐", effect: { bloodSugar: -11, mood: -14, energy: -23, satiety: -10 }, isPreferred: false, knowledgeTags: ["低血糖识别与处理","运动与补能"], lowSugarRisk: true, scienceTip: "因为怕香蕉升糖而只喝水，会让身体在已经不舒服时仍得不到任何能量。头晕不能自动诊断低血糖。先坐稳，吃几口香蕉补进少量易利用的碳水，再观察反应；只喝水无法提供能量。症状持续或加重时，应尽快测量或求助。" },
     ],
   },
   {
     id: 28, group: "afternoon", title: "奶茶社交", description: "同事说请客喝奶茶。", weekdayOnly: true,
     image: "/images/s-tea-4.jpg",
     choices: [
-      { label: "点一杯常规七分糖珍珠奶茶", effect: { bloodSugar: 28, energy: -10, satiety: 8, mood: 18 }, scienceTip: "七分糖加珍珠，游离糖和淀粉小料会一起进入这只大杯；品牌、杯型和配方不同，含糖量也会差很多。换小杯、少糖、少小料，社交快乐照样保留。" },
-      { label: "婉拒，自己泡一杯无糖绿茶", effect: { bloodSugar: 0, energy: 3, satiety: 0, mood: -5 }, scienceTip: "无糖绿茶省掉了饮料里的游离糖，清爽又不抢戏。照样碰杯、照样聊天，饮料只是社交道具；真正让你合群的是一起参与，不是杯子里必须装甜饮。" },
+      { id: "A", label: "选中杯三分糖，把珍珠换成看起来更清爽的椰果", effect: { bloodSugar: 34, mood: 32, energy: -18, satiety: 18 }, isPreferred: false, knowledgeTags: ["含糖饮料","社交选择"], scienceTip: "中杯三分糖加椰果，看似同时减糖又换料，但杯量、饮料糖和椰果糖浆仍会叠加。小杯五分糖若不加小料，总碳水反而可能更少；最好再看品牌营养信息。" },
+      { id: "B", label: "选小杯五分糖，不加任何小料", effect: { bloodSugar: 10, mood: 12, energy: 5, satiety: 5 }, isPreferred: true, knowledgeTags: ["含糖饮料","社交选择"], scienceTip: "小杯五分糖听起来更甜，但杯量更小、没有小料，总碳水可能比中杯三分糖加椰果更少。选奶茶不能只看甜度，还要把杯型和小料一起算。" },
     ],
   },
   {
     id: 29, group: "afternoon", title: "办公室零食", description: "同事递过来一包综合果蔬干。",
     image: "/images/s-tea.png",
     choices: [
-      { label: "吃几片，反正是蔬菜水果做的", effect: { bloodSugar: 20, energy: -5, satiety: 8, mood: 10 }, scienceTip: "“果蔬做的”也可能把天然糖和能量浓缩在小小几片里，部分产品还会油炸或额外加糖。先看配料表，再倒一小份出来吃，比对着包装想象自己在吃蔬菜更靠谱。" },
-      { label: "掏出自己带的一小袋毛豆", effect: { bloodSugar: 5, energy: 8, satiety: 15, mood: 5 }, scienceTip: "毛豆（未成熟大豆）富含优质蛋白、膳食纤维和镁，GI值极低，是下午零食中少见的「真正健康」选项。" },
+      { id: "A", label: "果蔬脆保留了蔬菜营养，吃一小包解馋", effect: { bloodSugar: 27, mood: 18, energy: -9, satiety: 14 }, isPreferred: false, knowledgeTags: ["食品加工","混合餐搭配"], scienceTip: "果蔬脆保留了原料名称，却不一定保留新鲜蔬果原本的水分、结构和饱腹感。脱水会让糖和能量更集中，部分果蔬脆还经过油炸或额外加糖。毛豆提供蛋白质和纤维，通常更耐饿；选择前仍要看配料表、盐和实际份量。" },
+      { id: "B", label: "即食毛豆也是植物零食，吃一小袋", effect: { bloodSugar: 5, mood: 1, energy: 14, satiety: 19 }, isPreferred: true, knowledgeTags: ["食品加工","混合餐搭配"], scienceTip: "即食毛豆同样方便，但蛋白质和纤维让它更像一份能接住饥饿的加餐。脱水会让糖和能量更集中，部分果蔬脆还经过油炸或额外加糖。毛豆提供蛋白质和纤维，通常更耐饿；选择前仍要看配料表、盐和实际份量。" },
     ],
   },
   {
     id: 30, group: "afternoon", title: "下午犯困", description: "下午三点，困意袭来。", weekdayOnly: true,
     image: "/images/s-tea-4.jpg",
     choices: [
-      { label: "开一罐红牛或喝杯加糖咖啡", effect: { bloodSugar: 22, energy: 8, satiety: 0, mood: 8 }, scienceTip: "糖和咖啡因能暂时提高警觉，但下午摄入较多咖啡因可能推迟入睡，把今天的困意滚进明天。真要喝，选小份、少糖，也别把它安排得离睡觉太近。" },
-      { label: "喝一杯黑咖啡，站起来拉伸5分钟", effect: { bloodSugar: 0, energy: 8, satiety: 0, mood: 5 }, scienceTip: "黑咖啡能提高警觉，起身活动也能让身体从久坐里醒过来。咖啡因作用时长因人而异，敏感的人看好时间，别用下午的咖啡透支晚上的睡眠。" },
+      { id: "A", label: "燕麦奶是植物奶，点一杯风味燕麦拿铁提神", effect: { bloodSugar: 30, mood: 14, energy: 18, satiety: 4 }, isPreferred: false, knowledgeTags: ["含糖饮料","咖啡因"], scienceTip: "风味燕麦拿铁里的“植物奶”光环，容易让人忽略燕麦饮本身的碳水和额外风味糖。小杯不加糖鲜奶拿铁减少了添加糖，起身走几分钟也能让肌肉参与葡萄糖利用；咖啡只能短暂提神，不能替代睡眠。" },
+      { id: "B", label: "点小杯不加糖鲜奶拿铁，再去接水走一圈", effect: { bloodSugar: 0, mood: 0, energy: 14, satiety: 4 }, isPreferred: true, knowledgeTags: ["含糖饮料","咖啡因"], scienceTip: "小杯无糖鲜奶拿铁先减掉添加糖，再起身走一圈，比换成风味燕麦奶更接近这次的目标。小杯不加糖鲜奶拿铁减少了添加糖，起身走几分钟也能让肌肉参与葡萄糖利用；咖啡只能短暂提神，不能替代睡眠。" },
     ],
   },
   {
-    id: 31, group: "afternoon", title: "无法逃避的甜品", description: "朋友拿着一块昂贵的抹茶慕斯热情地看着你吃下去。（你必须吃）",
+    id: 31, group: "afternoon", title: "朋友的甜品", description: "朋友递来一块抹茶慕斯，期待你一起尝尝。",
     image: "/images/s-tea-4.jpg",
     choices: [
-      { label: "吃完后配一杯黑咖啡，认为能刮油降糖", effect: { bloodSugar: 25, energy: -5, satiety: 12, mood: 12 }, scienceTip: "咖啡可以提神，却不会替这块蛋糕“刮油”。咖啡因还可能让部分人短时间内的胰岛素敏感性下降；想吃甜点就认真享受一小块，别指望再加一杯咖啡把它抵消。" },
-      { label: "吃完后借口去洗手间，在隔间做40个深蹲", effect: { bloodSugar: 18, energy: -8, satiety: 10, mood: -5 }, scienceTip: "大肌肉群收缩时，GLUT4会向肌细胞膜转位，帮助肌肉摄取葡萄糖；餐后走动或几组轻深蹲，确实可能让餐后曲线更平缓。舒服地动起来就有价值，甜品不需要变成一场偷偷受罚的运动。" },
+      { id: "A", label: "朋友很期待，完整吃完再配黑咖啡解腻", effect: { bloodSugar: 33, mood: 27, energy: -9, satiety: 19 }, isPreferred: false, knowledgeTags: ["甜品份量","餐后活动"], scienceTip: "黑咖啡只能解腻，不能减少已经吃下的糖和脂肪。与朋友分一半会直接减少甜品份量，饭后轻松走一走还能增加肌肉利用葡萄糖；重点是份量和轻活动。" },
+      { id: "B", label: "邀请朋友分一半，吃完一起散步十分钟", effect: { bloodSugar: 10, mood: 8, energy: -3, satiety: 10 }, isPreferred: true, knowledgeTags: ["甜品份量","餐后活动"], scienceTip: "与朋友分一半再散步，既减少甜品份量，也没有扫兴；饭后轻活动还能增加肌肉对葡萄糖的利用。黑咖啡不能抵消整块慕斯里的糖和脂肪。" },
     ],
   },
   {
     id: 32, group: "afternoon", title: "想喝汽水", description: "想喝点有味道的东西。",
     image: "/images/s-tea-4.jpg",
     choices: [
-      { label: "买一瓶「0卡代糖」气泡水", effect: { bloodSugar: 0, energy: 0, satiety: 0, mood: 8 }, scienceTip: "主流非糖甜味剂对血糖的直接影响通常远小于含糖汽水，偶尔用它替换甜饮很实用。把它当作一个过渡选项即可，日常主力仍然可以是水、茶和无糖饮品。" },
-      { label: "切几片柠檬泡在无味苏打水里", effect: { bloodSugar: 0, energy: 0, satiety: 0, mood: 3 }, scienceTip: "柠檬苏打水省掉了额外糖，清爽也简单；少量柠檬酸可能影响某些餐食的消化节奏。它最大的优点其实很朴素：让一杯无糖饮料更好喝，也让你更愿意补水。" },
+      { id: "A", label: "100%果汁没有额外加糖，选一瓶果汁气泡饮", effect: { bloodSugar: 25, mood: 12, energy: 0, satiety: 3 }, isPreferred: false, knowledgeTags: ["含糖饮料","食品标签"], scienceTip: "100% 果汁可以没有额外加糖，但果汁本身的糖依然存在。无糖柠檬苏打水主要提供味道和气泡，不额外叠加游离糖，因此这次对血糖的负担更小。" },
+      { id: "B", label: "想喝气泡口感，选一瓶无糖柠檬苏打水", effect: { bloodSugar: 0, mood: 0, energy: 8, satiety: 4 }, isPreferred: true, knowledgeTags: ["含糖饮料","食品标签"], scienceTip: "无糖柠檬苏打水保留气泡和味道，却没有再叠加一瓶果汁的糖。无糖柠檬苏打水主要提供味道和气泡，不额外叠加游离糖，因此这次对血糖的负担更小。" },
     ],
   },
   {
     id: 33, group: "afternoon", title: "嘴馋", description: "嘴巴很馋，又没到饭点。",
     image: "/images/s-tea.png",
     choices: [
-      { label: "拆开一包苏打饼干嚼几块", effect: { bloodSugar: 18, energy: -3, satiety: 8, mood: 8 }, scienceTip: "苏打饼干名字清淡，本质上仍以精制面粉和油脂为主，干脆的口感又很容易让人一块接一块。真饿就装几块出来，配牛奶或奶酪，别抱着整包边工作边消失。" },
-      { label: "喝一大杯水，等15分钟再决定", effect: { bloodSugar: 0, energy: 0, satiety: 0, mood: 0 }, scienceTip: "喝水再等等，能给嘴馋一个冷静期。十几分钟后如果肚子仍在认真抗议，就吃一份计划内加餐；水适合暂停冲动，不适合压住真正的饥饿。" },
+      { id: "A", label: "苏打饼干清淡不甜，拿三片垫一垫", effect: { bloodSugar: 24, mood: 18, energy: -5, satiety: 10 }, isPreferred: false, knowledgeTags: ["精制淀粉","饥饿觉察"], scienceTip: "苏打饼干吃起来清淡不甜，身体接收到的仍然是精制面粉和油脂。先喝水、换个环境，给冲动十分钟；如果之后仍然明确饥饿，就正常安排一份有蛋白质的加餐。" },
+      { id: "B", label: "早餐刚吃过，先喝水离开工位十分钟，还饿再加餐", effect: { bloodSugar: 0, mood: 0, energy: 4, satiety: 12 }, isPreferred: true, knowledgeTags: ["精制淀粉","饥饿觉察"], scienceTip: "早餐刚吃过时先离开工位十分钟，是先判断这次想吃来自饥饿还是习惯。先喝水、换个环境，给冲动十分钟；如果之后仍然明确饥饿，就正常安排一份有蛋白质的加餐。" },
     ],
   },
   {
     id: 34, group: "afternoon", title: "压力爆发", description: "压力太大，情绪快绷不住了。",
     image: "/images/s-tea-4.jpg",
     choices: [
-      { label: "去买个冰淇淋安慰一下自己", effect: { bloodSugar: 22, energy: -5, satiety: 8, mood: 15 }, scienceTip: "冰淇淋的甜味和绵密口感会让人短暂放松，但压力还在那里，下一次想吃的冲动也可能很快回来。想吃可以认真吃一小份，同时给情绪再找一个出口：离开工位走一圈、和朋友聊两句，或者先把让你崩溃的事写下来。" },
-      { label: "闭眼深呼吸3分钟，出门吹吹风", effect: { bloodSugar: 0, energy: 5, satiety: 0, mood: 8 }, scienceTip: "先离开现场、慢慢呼吸、出去走几分钟，相当于给情绪加了一个缓冲区。三分钟足够让冲动慢一点，也给你机会分清：现在更需要的是食物，还是喘口气。" },
+      { id: "A", label: "低糖冰淇淋份量不大，边吃边把工作做完", effect: { bloodSugar: 30, mood: 27, energy: -13, satiety: 10 }, isPreferred: false, knowledgeTags: ["压力进食","含糖食物"], scienceTip: "低糖冰淇淋并不是不能吃，真正容易形成问题的是压力一来就边工作边把它吃完。“低糖”冰淇淋仍可能含糖和脂肪，边工作边吃也容易忽略饱腹信号。出去走一圈能先给情绪一个出口，又不会增加糖负荷；如果回来仍想吃，再坐下来认真吃一小份。" },
+      { id: "B", label: "下楼买杯无糖茶，走十分钟换换脑子", effect: { bloodSugar: 0, mood: 10, energy: 13, satiety: 0 }, isPreferred: true, knowledgeTags: ["压力进食","含糖食物"], scienceTip: "无糖茶和十分钟走动先把压力与进食分开，也不会增加糖负荷。若回来仍想吃，可以坐下来认真吃一小份；“低糖”冰淇淋仍含糖和脂肪，关键是份量和习惯。" },
     ],
   },
   {
     id: 35, group: "afternoon", title: "饥饿救急", description: "肚子在抗议，需要点东西救急。",
     image: "/images/s-tea-4.jpg",
     choices: [
-      { label: "啃几根生芹菜和胡萝卜条", effect: { bloodSugar: 5, energy: 0, satiety: 8, mood: -3 }, scienceTip: "蔬菜条保留了纤维、体积和咀嚼感，适合只是嘴巴想忙一下的时候。如果是真饿，它提供的蛋白质和能量不够；加酸奶、奶酪或一小把坚果，才更像能接住饥饿的加餐。" },
-      { label: "吃一块原味全脂奶酪或几片牛肉干", effect: { bloodSugar: 2, energy: 8, satiety: 15, mood: 5 }, scienceTip: "奶酪或牛肉干的蛋白质与脂肪更扛饿，适合给真饿的下午垫一垫。选小份、看盐分，再配点蔬菜或完整水果，会吃得更舒服也更完整。" },
+      { id: "A", label: "胡萝卜和芹菜低卡又有纤维，吃一盒撑到晚饭", effect: { bloodSugar: 5, mood: 16, energy: -4, satiety: 10 }, isPreferred: false, knowledgeTags: ["饥饿觉察","混合餐搭配"], scienceTip: "蔬菜条适合轻微嘴馋，但真饿时把它当成撑到晚饭的唯一加餐，能量和蛋白质都可能接不上。无糖酸奶配少量坚果补上蛋白质与脂肪，通常更能接住下午的饥饿，也不需要把加餐吃成一顿大餐。" },
+      { id: "B", label: "吃一杯无糖酸奶，配一小把坚果", effect: { bloodSugar: 5, mood: 8, energy: 12, satiety: 20 }, isPreferred: true, knowledgeTags: ["饥饿觉察","混合餐搭配"], scienceTip: "无糖酸奶和少量坚果补上蛋白质与脂肪，通常比只靠低卡蔬菜更耐饿。无糖酸奶配少量坚果补上蛋白质与脂肪，通常更能接住下午的饥饿，也不需要把加餐吃成一顿大餐。" },
     ],
   },
   {
-    id: 36, group: "afternoon", title: "反应性低血糖的死循环", description: "中午吃完大碗牛肉面后 2 小时，你突然感到极度的心慌、饥饿和犯困。",
+    id: 36, group: "afternoon", title: "饭后两小时", description: "中午吃完大碗牛肉面两小时后，你突然心慌、饥饿、犯困，手机里能查看这一餐的 CGM 曲线。",
     image: "/images/s-low-sugar.png",
     choices: [
-      { label: "赶紧吃两块巧克力夹心饼干补充能量", effect: { bloodSugar: 22, energy: -8, satiety: 8, mood: 10 }, scienceTip: "牛肉面后心慌、手抖或犯困，可能和血糖有关，也可能来自吃太快、疲劳或其他原因。先停下来，有条件就测量；如果只是嘴馋，再塞甜饼干反而可能继续增加波动。" },
-      { label: "忍住饥饿，喝一大杯水，吃一颗水煮蛋", effect: { bloodSugar: 2, energy: 5, satiety: 10, mood: 0 }, scienceTip: "水煮蛋能增加饱腹感，适合普通饥饿时加餐；已经出现明显低血糖症状或测值偏低时，则需要优先补快速碳水，再按低血糖流程复测和处理。" },
+      { id: "A", label: "凭感觉判断是血糖低了，先吃两块夹心饼干", effect: { bloodSugar: 29, mood: 18, energy: -14, satiety: 10 }, isPreferred: false, knowledgeTags: ["低血糖识别与处理","餐后反应"], scienceTip: "大碗面后心慌犯困可能来自快速波动、吃得太多或疲劳，不等于已经低血糖。没看CGM就吃夹心饼干，可能再叠一段快速糖；先确认数值，偏低时再按流程补糖。" },
+      { id: "B", label: "先坐下看 CGM 数值和趋势，再决定是否补糖", effect: { bloodSugar: 0, mood: 0, energy: 13, satiety: 18 }, isPreferred: true, knowledgeTags: ["低血糖识别与处理","餐后反应"], scienceTip: "先看CGM数值和趋势，再决定是否补糖。大碗面后的心慌犯困不一定是低血糖；若数值并不低，夹心饼干只会在原有曲线上再叠一段快速糖。" },
     ],
   },
   {
-    id: 37, group: "afternoon", title: "15克法则", description: "你的动态血糖仪突然疯狂报警，显示血糖跌到了 3.8 mmol/L，强烈的眩晕袭来。",
+    id: 37, group: "afternoon", title: "CGM 报警", description: "你的 CGM 报警，显示 3.8 mmol/L，同时出现强烈眩晕。",
     image: "/images/s-low-sugar.png",
     choices: [
-      { label: "抓起手边的一把花生和核桃狂吃", effect: { bloodSugar: 0, energy: -12, satiety: 12, mood: -8 }, scienceTip: "如果已经测得血糖低、本人清醒且能吞咽，坚果的脂肪和蛋白质会让消化速度太慢，不适合当第一轮纠正。先补约15克快速碳水，15分钟后复测；意识异常或不能吞咽时不要强喂，立即呼叫急救。" },
-      { label: "吃 3 块硬糖（约15g碳水），静坐等待 15 分钟", effect: { bloodSugar: 18, energy: 12, satiety: 2, mood: 5 }, scienceTip: "“15-15法则”适用于测得低血糖且能够安全吞咽时：补约15克快速碳水，15分钟后复测，仍低再重复。三块糖是否正好15克要看包装；意识异常、不能吞咽或情况加重时，直接呼叫急救。" },
+      { id: "A", label: "坚果更健康，抓一把花生和核桃慢慢补", effect: { bloodSugar: -13, mood: -10, energy: -10, satiety: 14 }, isPreferred: false, knowledgeTags: ["低血糖识别与处理"], lowSugarRisk: true, scienceTip: "已经测到 3.8 mmol/L 并眩晕时，坚果虽然健康，却补得太慢。坚果的脂肪和蛋白质会减慢消化，不适合立即纠正；补约 15 克快速碳水，15 分钟后复测，仍低再重复。意识异常或不能吞咽时不要强喂，应立即呼叫急救。" },
+      { id: "B", label: "按“15-15 法则”补约 15 克快速碳水，再复测", effect: { bloodSugar: 16, mood: 5, energy: 14, satiety: 0 }, isPreferred: true, knowledgeTags: ["低血糖识别与处理"], scienceTip: "这时按“15-15 法则”补快速碳水并复测，处理的是一个已被测量确认的低血糖情境。坚果的脂肪和蛋白质会减慢消化，不适合立即纠正；补约 15 克快速碳水，15 分钟后复测，仍低再重复。意识异常或不能吞咽时不要强喂，应立即呼叫急救。" },
     ],
   },
   {
-    id: 38, group: "afternoon", title: "救急后的反弹", description: "(接上题) 吃完糖 15 分钟后，眩晕感消失了，但胃里依然觉得空荡荡的。",
+    id: 38, group: "afternoon", title: "补糖十五分钟后", description: "（接上题）补糖 15 分钟后，眩晕感消失了，但胃里仍觉得空。",
     image: "/images/s-low-sugar.png",
     choices: [
-      { label: "趁热打铁，再吃一块小蛋糕彻底吃饱", effect: { bloodSugar: 28, energy: -8, satiety: 18, mood: 10 }, scienceTip: "症状缓解后，第一步还是复测，而不是顺着空腹感继续塞蛋糕。再补一轮甜食可能把血糖推得更高；确认已经恢复后，再根据离下一餐还有多久决定要不要加餐。" },
-      { label: "拿出一小袋无糖纯肉肠或一小块奶酪吃下", effect: { bloodSugar: 3, energy: 8, satiety: 15, mood: 5 }, scienceTip: "如果下一餐还很远，快速碳水纠正后再吃一点奶酪或肉类，可以增加饱腹感。先看复测结果和离下一餐的时间，再遵循自己的用药及低血糖处理方案。" },
+      { id: "A", label: "症状没了但胃还空，吃一根全麦能量棒预防再低", effect: { bloodSugar: 20, mood: 8, energy: 0, satiety: 15 }, isPreferred: false, knowledgeTags: ["低血糖识别与处理"], scienceTip: "症状缓解后直接吃能量棒，容易跳过最关键的一步：确认数值是否真的恢复。15 分钟后仍低，继续补快速碳水；已经恢复且离下一餐较远，再补含蛋白质和较慢碳水的小加餐。先看数值再行动，能避免一路吃到血糖反弹。" },
+      { id: "B", label: "先看复测结果，再决定是否补第二轮或正常加餐", effect: { bloodSugar: 1, mood: 5, energy: 10, satiety: 19 }, isPreferred: true, knowledgeTags: ["低血糖识别与处理"], scienceTip: "先复测，再区分“仍低”和“已恢复但离下一餐远”，后续补给才不会多一轮或少一轮。15 分钟后仍低，继续补快速碳水；已经恢复且离下一餐较远，再补含蛋白质和较慢碳水的小加餐。先看数值再行动，能避免一路吃到血糖反弹。" },
     ],
   },
   {
     id: 39, group: "afternoon", title: "逛街的隐形消耗", description: "周末逛街走了整整 15000 步，下午 4 点，你感到腿肚子发软，脾气异常暴躁。",
     image: "/images/s-outside.png",
     choices: [
-      { label: "走进奶茶店，点一杯加满小料的热奶茶", effect: { bloodSugar: 25, energy: 5, satiety: 10, mood: 18 }, scienceTip: "走了一万五千步后补能量很合理，但大杯奶茶加满小料，游离糖、淀粉和总能量可能直接升级成一顿饭。换成小杯、少糖、少小料，再配一份正常加餐，就够身体慢慢恢复。" },
-      { label: "去便利店买一盒无糖酸奶和一个香蕉", effect: { bloodSugar: 12, energy: 15, satiety: 18, mood: 10 }, scienceTip: "香蕉提供容易利用的碳水，原味酸奶补上蛋白质，这套便利店组合简单又够用。它不用被封为“最科学补给”，酸奶少糖、份量合适，身体舒服就是好方案。" },
+      { id: "A", label: "走了一万五千步该补能，选少糖燕麦奶茶加芋圆", effect: { bloodSugar: 33, mood: 28, energy: -11, satiety: 22 }, isPreferred: false, knowledgeTags: ["运动与补能","含糖饮料"], scienceTip: "一万五千步后需要补能量很合理，但少糖奶茶加芋圆把饮料糖、淀粉小料和杯量叠到了一起。香蕉提供易利用的碳水，原味酸奶补蛋白质，份量更容易掌握，也更适合把普通逛街后的饥饿接住。" },
+      { id: "B", label: "香蕉配原味酸奶，碳水和蛋白质都补一点", effect: { bloodSugar: 12, mood: 14, energy: 19, satiety: 20 }, isPreferred: true, knowledgeTags: ["运动与补能","含糖饮料"], scienceTip: "香蕉配原味酸奶同样能补能，却把碳水和蛋白质装进更容易判断的份量里。香蕉提供易利用的碳水，原味酸奶补蛋白质，份量更容易掌握，也更适合把普通逛街后的饥饿接住。" },
     ],
   },
 ]
@@ -407,96 +426,96 @@ const DINNER_EVENTS: GameEvent[] = [
     id: 40, group: "dinner", title: "晚餐主食", description: "晚餐想选个主食。",
     image: "/images/s-dinner.png",
     choices: [
-      { label: "选口感黏糯的糯玉米", effect: { bloodSugar: 25, energy: -5, satiety: 25, mood: 8 }, scienceTip: "糯玉米以支链淀粉为主，黏糯结构通常更容易被淀粉酶分解，血糖反应往往比同份量甜玉米更快。把它当作这顿饭的主食、看好份量，再配蔬菜和蛋白质就好。" },
-      { label: "选水分较多的甜玉米", effect: { bloodSugar: 15, energy: 8, satiety: 22, mood: 5 }, scienceTip: "甜玉米同样是主食，只是淀粉组成、成熟度和水分与糯玉米不同，餐后反应通常更温和。选一根合适大小，再配蔬菜和蛋白质，就是一份稳妥的晚餐搭配。" },
+      { id: "A", label: "糯玉米口感扎实，觉得会更耐饿", effect: { bloodSugar: 33, mood: 14, energy: -13, satiety: 33 }, isPreferred: false, knowledgeTags: ["淀粉类型","碳水份量"], scienceTip: "糯玉米口感扎实，不代表消化一定更慢；黏糯感常来自更高比例的支链淀粉。糯玉米支链淀粉比例通常更高、质地黏糯，更容易被淀粉酶分解；同样大小下，甜玉米的餐后反应往往更温和。无论选哪种，一根的大小和整餐搭配仍然重要。" },
+      { id: "B", label: "甜玉米水分更多，选一根配晚餐", effect: { bloodSugar: 15, mood: 1, energy: 10, satiety: 24 }, isPreferred: true, knowledgeTags: ["淀粉类型","碳水份量"], scienceTip: "甜玉米水分更多，同样大小下通常比糯玉米温和一些，但它依然要算作主食。糯玉米支链淀粉比例通常更高、质地黏糯，更容易被淀粉酶分解；同样大小下，甜玉米的餐后反应往往更温和。无论选哪种，一根的大小和整餐搭配仍然重要。" },
     ],
   },
   {
     id: 41, group: "dinner", title: "周末大餐", description: "周末大餐，朋友点了芝士烤饼。", weekendOnly: true,
     image: "/images/s-dinner-party.png",
     choices: [
-      { label: "吃几块拉丝芝士烤饼", effect: { bloodSugar: 24, energy: -12, satiety: 42, mood: 18 }, scienceTip: "芝士、饼皮和肉馅组成高脂混合餐，脂肪和蛋白质会让胃排空变慢，血糖峰值可能来得更晚、拖得更久。喜欢就吃几块，别因为当下没感觉就一路续到睡前。" },
-      { label: "只吃里面的肉馅，把烤饼留给别人", effect: { bloodSugar: 5, energy: 0, satiety: 20, mood: -8 }, scienceTip: "只吃肉馅能少掉饼皮的淀粉，但蛋白质仍会刺激胰岛素，高脂肪也可能把餐后反应推迟。少吃几块烤饼、配些蔬菜，比把饼拆开只挖馅更现实。" },
+      { id: "A", label: "烤饼里有肉和芝士，吃三小块就不再点别的主食", effect: { bloodSugar: 27, mood: 32, energy: -23, satiety: 49 }, isPreferred: false, knowledgeTags: ["糖脂组合","碳水份量"], scienceTip: "烤饼没配米饭，饼皮仍是主食。芝士、饼皮和肉馅构成高脂高碳水混合餐，可能让胃排空变慢、血糖峰值延后；先吃一块配菜，仍饿再加，更易控制总量。" },
+      { id: "B", label: "先吃一块烤饼配蔬菜，仍饿再加第二块", effect: { bloodSugar: 9, mood: 0, energy: 4, satiety: 20 }, isPreferred: true, knowledgeTags: ["糖脂组合","碳水份量"], scienceTip: "先吃一块烤饼配蔬菜，仍饿再加第二块，让份量跟着饥饿调整。高脂高碳水的芝士烤饼可能让胃排空变慢、血糖峰值延后，不能只看当下感觉。" },
     ],
   },
   {
     id: 42, group: "dinner", title: "饭后的消食", description: "晚上吃了一顿丰盛的碳水大餐，决定做点什么补救一下。",
     image: "/images/s-dinner.png",
     choices: [
-      { label: "换上跑鞋，去跑个3公里的高强度慢跑", effect: { bloodSugar: 10, energy: -18, satiety: -12, mood: -8 }, scienceTip: "刚吃饱就冲三公里，胃部不适和反流可能先来报到；高强度运动时，肾上腺素等反调节激素也可能让血糖暂时上升。先给胃一点消化时间，身体舒服后再跑。" },
-      { label: "站在厨房把全家的碗洗了，把地拖一遍", effect: { bloodSugar: -10, energy: -5, satiety: -5, mood: 5 }, scienceTip: "洗碗、拖地或散步都属于低强度活动，肌肉收缩会增加葡萄糖利用，餐后早点动一动通常比久坐更有利。时间不用卡得太死，轻松开始、能够坚持才是重点。" },
+      { id: "A", label: "跑三公里把这顿碳水尽快消耗掉", effect: { bloodSugar: 22, mood: -10, energy: -24, satiety: -19 }, isPreferred: false, knowledgeTags: ["餐后活动","运动强度"], scienceTip: "刚吃饱就跑三公里，并不能把这顿碳水立刻一笔勾销，胃部和运动强度反而可能先给你反馈。刚吃饱就跑三公里，胃部不适和反流可能先出现，高强度运动的压力激素还可能让血糖短暂上升；洗碗、拖地或散步这类轻活动更适合作为饭后开始。" },
+      { id: "B", label: "刚吃饱先洗碗拖地十分钟，晚点再正常运动", effect: { bloodSugar: 0, mood: 4, energy: -4, satiety: -5 }, isPreferred: true, knowledgeTags: ["餐后活动","运动强度"], scienceTip: "洗碗拖地十分钟是轻活动，能让肌肉开始参与葡萄糖利用，又不用在饱腹时硬上强度。刚吃饱就跑三公里，胃部不适和反流可能先出现，高强度运动的压力激素还可能让血糖短暂上升；洗碗、拖地或散步这类轻活动更适合作为饭后开始。" },
     ],
   },
   {
     id: 43, group: "dinner", title: "减肥晚餐", description: "想「少吃点」来减肥。",
     image: "/images/s-dinner.png",
     choices: [
-      { label: "晚饭不吃主食，改吃半个大西瓜", effect: { bloodSugar: 22, energy: -5, satiety: 15, mood: 12 }, scienceTip: "半个大西瓜的总份量不小，虽然水分多，却缺少蛋白质，也很难独自撑起一顿晚饭。水果可以留一小份，再加蔬菜、蛋白质和适量主食，整顿饭才更完整。" },
-      { label: "正常吃一小碗杂粮饭和一盘炒菜", effect: { bloodSugar: 12, energy: 12, satiety: 30, mood: 8 }, scienceTip: "小碗杂粮饭配一盘有蔬菜、有蛋白质的炒菜，碳水、纤维和蛋白质都在场，通常比水果代餐更完整。正常吃一顿结构均衡、份量舒服的晚饭，本身就是很好的选择。" },
+      { id: "A", label: "西瓜热量低，吃一大盘再配坚果当晚餐", effect: { bloodSugar: 30, mood: 23, energy: -13, satiety: 19 }, isPreferred: false, knowledgeTags: ["水果代餐误区","混合餐搭配"], scienceTip: "一大盘西瓜加坚果看起来清爽，却把大量水果当成了正餐主食，蛋白质仍然不足。坚果能补脂肪，却不能把大量水果自动变成完整晚餐；小碗杂粮饭配蔬菜和肉，再留小份水果，碳水、纤维和蛋白质更均衡。" },
+      { id: "B", label: "小碗杂粮饭配蔬菜和肉，水果留一小份餐后吃", effect: { bloodSugar: 14, mood: 0, energy: 14, satiety: 34 }, isPreferred: true, knowledgeTags: ["水果代餐误区","混合餐搭配"], scienceTip: "杂粮饭、蔬菜和肉组成正餐，水果留小份餐后吃，更容易同时看清总碳水和蛋白质。坚果能补脂肪，却不能把大量水果自动变成完整晚餐；小碗杂粮饭配蔬菜和肉，再留小份水果，碳水、纤维和蛋白质更均衡。" },
     ],
   },
   {
     id: 44, group: "dinner", title: "长辈的爱", description: "长辈坚持要你把一大碗白米饭吃完。",
     image: "/images/s-dinner.png",
     choices: [
-      { label: "硬着头皮把一大碗白米饭吃完", effect: { bloodSugar: 28, energy: -12, satiety: 42, mood: 5 }, overfull: true, scienceTip: "一大碗白米饭的碳水量取决于碗和实际份量，晚间反应也会因人而异。更确定的是，你已经吃到需要“硬着头皮”了：孝心不用靠硬撑证明，吃到舒服就停，剩下的打包。" },
-      { label: "撒娇说多夹菜少吃饭，把一半米饭拨出去", effect: { bloodSugar: 12, energy: 8, satiety: 30, mood: 8 }, scienceTip: "机智的社交碳水转移策略。减半米饭摄入的同时，增加蔬菜和蛋白质比例，是有效且不伤感情的控糖方案。" },
+      { id: "A", label: "不想浪费长辈心意，按盛好的份量把白米饭吃完", effect: { bloodSugar: 34, mood: 9, energy: -19, satiety: 53 }, isPreferred: false, knowledgeTags: ["碳水份量","饱腹觉察"], overfull: true, scienceTip: "把一大碗白米饭吃完是在回应长辈心意，也把这份米饭的全部碳水一起吃下了。先吃菜和肉，再按饥饿吃米饭，更容易让纤维和蛋白质减缓后续吸收；吃到舒服就停、把剩下的打包，也能同时照顾血糖和长辈的心意。" },
+      { id: "B", label: "先吃菜和肉，米饭吃到舒服，剩下请长辈打包", effect: { bloodSugar: 14, mood: 0, energy: 10, satiety: 38 }, isPreferred: true, knowledgeTags: ["碳水份量","饱腹觉察"], scienceTip: "先菜肉、米饭吃到舒服再打包，既不否定长辈的爱，也把份量交还给自己的饥饿感。先吃菜和肉，再按饥饿吃米饭，更容易让纤维和蛋白质减缓后续吸收；吃到舒服就停、把剩下的打包，也能同时照顾血糖和长辈的心意。" },
     ],
   },
   {
     id: 45, group: "dinner", title: "饭局饮酒", description: "饭局上，大家在举杯。", weekendOnly: true,
     image: "/images/s-dinner-party.png",
     choices: [
-      { label: "跟大家一起干了两大杯冰啤酒", effect: { bloodSugar: 20, energy: -10, satiety: 10, mood: 15 }, scienceTip: "啤酒会带来酒精和额外碳水；酒精还会抑制肝脏输出葡萄糖，尤其对使用胰岛素或促泌剂的人，可能增加延迟性低血糖风险。别空腹喝，也别拼酒，喝完留意之后几小时的身体状态。" },
-      { label: "倒一杯苏打水假装是酒跟大家碰杯", effect: { bloodSugar: 0, energy: 0, satiety: 0, mood: 5 }, scienceTip: "完全规避了酒精和液体碳水，社交目的基本达成，代价是显得有点不合群。" },
+      { id: "A", label: "先吃菜垫胃，觉得这样慢喝两杯啤酒问题不大", effect: { bloodSugar: 27, mood: 23, energy: -14, satiety: 18 }, isPreferred: false, knowledgeTags: ["酒精与血糖","社交选择"], scienceTip: "先吃菜确实比完全空腹好，但它不足以抵消两杯啤酒的酒精和碳水。酒精还可能抑制肝脏输出葡萄糖，对使用胰岛素或促泌剂的人尤其要留意延迟性低血糖；把总酒量限制在一小杯，并用无糖苏打水替换后续酒精，风险更低。" },
+      { id: "B", label: "正常吃饭，只喝一小杯低度酒，其余换无糖苏打水", effect: { bloodSugar: 6, mood: 8, energy: 0, satiety: 4 }, isPreferred: true, knowledgeTags: ["酒精与血糖","社交选择"], scienceTip: "正常吃饭、酒只留一小杯，再用无糖苏打水接替，真正减少的是总酒量。酒精还可能抑制肝脏输出葡萄糖，对使用胰岛素或促泌剂的人尤其要留意延迟性低血糖；把总酒量限制在一小杯，并用无糖苏打水替换后续酒精，风险更低。" },
     ],
   },
   {
     id: 46, group: "dinner", title: "厨房炒菜", description: "自己下厨炒菜。",
     image: "/images/s-dinner.png",
     choices: [
-      { label: "炒肉时放点水淀粉勾芡，颜值更好", effect: { bloodSugar: 15, energy: 0, satiety: 25, mood: 8 }, scienceTip: "水淀粉在加热时会糊化，形成附着在食物表面的芡汁，也会额外带来一部分容易消化的淀粉。薄薄一层负责挂汁就够了；芡越厚、收汁越浓，吃进去的淀粉和酱汁也越多。" },
-      { label: "清炒，不放糖不勾芡", effect: { bloodSugar: 5, energy: 8, satiety: 25, mood: 5 }, scienceTip: "剔除了所有隐性碳水添加，保留食材营养价值。口感稍逊，但血糖负担大幅降低。" },
+      { id: "A", label: "加两勺水淀粉收成浓汁，少放油也能好吃", effect: { bloodSugar: 23, mood: 18, energy: -4, satiety: 25 }, isPreferred: false, knowledgeTags: ["食物结构与糊化","隐藏淀粉"], scienceTip: "水淀粉受热会糊化，浓芡会把更多容易消化的淀粉和酱汁裹在每口菜上。少放油不等于没有额外碳水；半勺做薄芡，保留口感也更容易控制份量。" },
+      { id: "B", label: "只用半勺水淀粉做薄芡，让汁刚好挂住菜", effect: { bloodSugar: 7, mood: 0, energy: 10, satiety: 25 }, isPreferred: true, knowledgeTags: ["食物结构与糊化","隐藏淀粉"], scienceTip: "半勺水淀粉做薄芡，能保留挂汁口感，也把额外淀粉控制在较小份量。水淀粉受热后会糊化；芡越厚，附着在每口菜上的淀粉和酱汁也越多。" },
     ],
   },
   {
-    id: 47, group: "dinner", title: "煲汤盲区", description: "一锅煲汤，配菜要怎么选？",
+    id: 47, group: "dinner", title: "煲汤配菜", description: "一锅煲汤，配菜要怎么选？",
     image: "/images/s-dinner.png",
     choices: [
-      { label: "大口吃汤里炖软的山药、莲藕和芋头", effect: { bloodSugar: 22, energy: -5, satiety: 30, mood: 10 }, scienceTip: "山药、莲藕和芋头都含较多淀粉，炖软后淀粉糊化更充分，通常也更容易消化。把它们算进这顿饭的主食份量，挑一两种、少量吃，再给绿叶菜和肉留点位置。" },
-      { label: "只吃排骨肉和单独炒的绿叶菜", effect: { bloodSugar: 5, energy: 8, satiety: 28, mood: 0 }, scienceTip: "排骨和绿叶菜能提供蛋白质、脂肪、纤维和微量营养素，主食却还缺席。按饥饿和活动量留一点根茎或杂粮，会让这顿晚饭更完整。" },
+      { id: "A", label: "山药、莲藕和芋头都是天然食材，每样夹一点", effect: { bloodSugar: 29, mood: 14, energy: -9, satiety: 34 }, isPreferred: false, knowledgeTags: ["碳水识别","混合餐搭配"], scienceTip: "山药、莲藕和芋头都很天然，但三样各来一点，淀粉仍会相加。炖软的山药、莲藕和芋头淀粉糊化更充分，通常更容易消化。三样各夹一点，会不知不觉叠出多份主食；选其中一种算作主食，再配排骨和绿叶菜，碳水、蛋白质和纤维更清楚。" },
+      { id: "B", label: "选一种根茎当主食，再配排骨和绿叶菜", effect: { bloodSugar: 7, mood: 0, energy: 14, satiety: 34 }, isPreferred: true, knowledgeTags: ["碳水识别","混合餐搭配"], scienceTip: "只选一种根茎当主食，再配排骨和绿叶菜，让这顿饭的主食边界更清楚。炖软的山药、莲藕和芋头淀粉糊化更充分，通常更容易消化。三样各夹一点，会不知不觉叠出多份主食；选其中一种算作主食，再配排骨和绿叶菜，碳水、蛋白质和纤维更清楚。" },
     ],
   },
   {
-    id: 48, group: "dinner", title: "枯燥的减脂餐", description: "减脂期的晚饭，严格还是放一点松？",
+    id: 48, group: "dinner", title: "减脂晚餐", description: "减脂期的晚饭，严格还是放一点松？",
     image: "/images/s-dinner.png",
     choices: [
-      { label: "水煮鸡胸肉加水煮西兰花，一滴油不放", effect: { bloodSugar: 5, energy: -5, satiety: 25, mood: -15 }, scienceTip: "鸡胸西兰花本身没错，问题是把每顿饭都吃成惩罚。长期高度限制、食物单调和强烈禁食规则，可能增加失控进食的风险；能持续的减脂餐，应该同时考虑营养、口味和满足感。" },
-      { label: "在鸡胸肉和西兰花上淋一圈橄榄油", effect: { bloodSugar: 5, energy: 10, satiety: 30, mood: 8 }, scienceTip: "一圈橄榄油让口感更好，也帮助脂溶性维生素吸收。油依然有能量，所以一圈负责提味就够了，不用在盘子上画成同心圆。" },
+      { id: "A", label: "水煮鸡胸和西兰花，配零脂酱，尽量把热量压低", effect: { bloodSugar: 5, mood: -27, energy: -13, satiety: 21 }, isPreferred: false, knowledgeTags: ["可持续饮食","混合餐搭配"], scienceTip: "水煮鸡胸、西兰花和零脂酱看起来热量很低，却可能把晚餐做成很快又饿的一顿。少量橄榄油改善口感，小份杂粮补上适量碳水，再配鸡胸和西兰花，整餐更完整，也更容易长期坚持。" },
+      { id: "B", label: "少量橄榄油调味，配一小份杂粮，把它当正常晚饭", effect: { bloodSugar: 10, mood: 10, energy: 14, satiety: 30 }, isPreferred: true, knowledgeTags: ["可持续饮食","混合餐搭配"], scienceTip: "少量橄榄油和小份杂粮没有破坏控糖，反而把口感、适量碳水和完整度补了回来。少量橄榄油改善口感，小份杂粮补上适量碳水，再配鸡胸和西兰花，整餐更完整，也更容易长期坚持。" },
     ],
   },
   {
     id: 49, group: "dinner", title: "火锅局", description: "吃火锅，锅里沸腾着。",
     image: "/images/s-dinner-party.png",
     choices: [
-      { label: "煮一大堆菠菜、生菜和炸腐竹", effect: { bloodSugar: 18, energy: -5, satiety: 30, mood: 12 }, scienceTip: "菠菜、生菜仍然值得吃；油厚盐重的锅底和本身经过油炸的腐竹，才是这盘里的能量大户。蔬菜别久泡油汤、汤少喝一点，炸腐竹也控制份量。" },
-      { label: "主攻新鲜肥牛、毛肚和鹌鹑蛋", effect: { bloodSugar: 5, energy: 5, satiety: 32, mood: 5 }, scienceTip: "肥牛、毛肚和鹌鹑蛋能补蛋白质，高脂肥牛也会带来不少能量。加上蔬菜、菌菇和适量主食，别让整顿火锅只剩肉，才更完整也更舒服。" },
+      { id: "A", label: "蔬菜多就不点主食，再夹炸腐竹和鱼丸增加饱腹", effect: { bloodSugar: 24, mood: 14, energy: -5, satiety: 26 }, isPreferred: false, knowledgeTags: ["火锅搭配","隐藏糖与油脂"], scienceTip: "不点米饭不等于没有主食：炸腐竹、鱼丸和蘸料仍可能带来淀粉、糖和脂肪。蔬菜菌菇配瘦肉豆腐，再留半份明确主食，更容易看清这顿火锅的结构和份量。" },
+      { id: "B", label: "蔬菜菌菇、瘦肉豆腐，再加半份主食", effect: { bloodSugar: 10, mood: 8, energy: 15, satiety: 35 }, isPreferred: true, knowledgeTags: ["火锅搭配","隐藏糖与油脂"], scienceTip: "蔬菜菌菇、瘦肉豆腐和半份明确主食，让火锅里看不见的碳水更容易被管理。蔬菜菌菇配瘦肉豆腐，再留半份明确主食，更容易看清这顿火锅的结构和份量。" },
     ],
   },
   {
-    id: 50, group: "dinner", title: "极饿时的运动", description: "晚上 8 点你还没吃晚饭，但预定的高强度动感单车课要开始了。",
+    id: 50, group: "dinner", title: "晚间动感单车", description: "晚上 8 点你还没吃晚饭，但预定的高强度动感单车课要开始了。",
     image: "/images/s-exercise.png",
     choices: [
-      { label: "不管了，饿着肚子蹬车，正好燃烧脂肪", effect: { bloodSugar: 10, energy: -22, satiety: -15, mood: -15 }, scienceTip: "已经饿到发软还去拼高强度，训练质量和动作安全都会先掉线；身体会同时动用肝糖原、脂肪等多种燃料。头晕、心慌或乏力时，先补给或降强度，比硬扛更能保护训练状态。" },
-      { label: "吃一根香蕉，等 10 分钟再进去上课", effect: { bloodSugar: 10, energy: 15, satiety: 8, mood: 8 }, scienceTip: "香蕉提供容易消化的碳水，是方便的运动前补给。等待时间按训练强度和胃部感受调整；吃完舒服、有力气开练，比死守10分钟更重要。" },
+      { id: "A", label: "空腹训练能多燃脂，先上完课再吃晚饭", effect: { bloodSugar: -17, mood: -19, energy: -29, satiety: -19 }, isPreferred: false, knowledgeTags: ["运动与补能","规律进餐"], lowSugarRisk: true, scienceTip: "错过晚饭后再空腹上高强度课，所谓多燃脂可能先换成没力气和动作不稳。香蕉提供容易利用的碳水，份量不大；先补一点、按胃部感受稍作消化，通常比空腹硬上更安全。" },
+      { id: "B", label: "怕训练时没力气，课前吃一根香蕉稍作消化", effect: { bloodSugar: 10, mood: 10, energy: 23, satiety: 10 }, isPreferred: true, knowledgeTags: ["运动与补能","规律进餐"], scienceTip: "课前一根香蕉不是正式晚饭，而是给即将开始的训练补一点容易利用的碳水。香蕉提供容易利用的碳水，份量不大；先补一点、按胃部感受稍作消化，通常比空腹硬上更安全。" },
     ],
   },
   {
     id: 51, group: "dinner", title: "极寒的考验", description: "冬天在户外等了半小时公交车，被冻得瑟瑟发抖，身体热量大量流失。",
     image: "/images/s-outside.png",
     choices: [
-      { label: "买一个烤红薯，趁热吃下去", effect: { bloodSugar: 15, energy: 12, satiety: 18, mood: 15 }, scienceTip: "冻到发抖时，身体的产热和能量消耗都在上升，热红薯提供容易利用的碳水，也带来温度和饱腹感。这种时候不用为了控糖硬扛：先找暖和的地方，再安心吃一份热主食。" },
-      { label: "坚持控糖，只喝自己保温杯里的温白开", effect: { bloodSugar: 0, energy: -10, satiety: 0, mood: -8 }, scienceTip: "温水能让人舒服，但只喝水补不了发抖时增加的能量消耗。先避风保暖，再补一点红薯、面包等碳水；如果持续剧烈发抖、动作笨拙或反应变慢，要警惕失温并及时求助。" },
+      { id: "A", label: "先到室内取暖，再吃一个热红薯补能量", effect: { bloodSugar: 19, mood: 19, energy: 14, satiety: 20 }, isPreferred: true, knowledgeTags: ["寒冷与补能","碳水作用"], scienceTip: "先取暖再吃热红薯，既处理冷暴露，也补回发抖时增加的能量消耗。先避风取暖，再吃一份热红薯补碳水，比因为怕升糖继续空腹更能接住当下状态。若持续剧烈发抖、动作笨拙或反应变慢，要警惕失温并及时求助。" },
+      { id: "B", label: "担心晚餐前再加碳水，先喝温水等回家", effect: { bloodSugar: -11, mood: -14, energy: -18, satiety: 4 }, isPreferred: false, knowledgeTags: ["寒冷与补能","碳水作用"], lowSugarRisk: true, scienceTip: "温水能让身体舒服，却不能在冷到发抖时提供需要的能量；单纯等到回家可能把不适继续拖长。先避风取暖，再吃一份热红薯补碳水，比因为怕升糖继续空腹更能接住当下状态。若持续剧烈发抖、动作笨拙或反应变慢，要警惕失温并及时求助。" },
     ],
   },
 ]
@@ -506,56 +525,56 @@ const EVENING_EVENTS: GameEvent[] = [
     id: 52, group: "evening", title: "夜间运动", description: "晚上想打羽毛球锻炼。",
     image: "/images/s-exercise.png",
     choices: [
-      { label: "空腹直接去，燃脂效果更好", effect: { bloodSugar: 10, energy: -20, satiety: -12, mood: 0 }, scienceTip: "空腹打球时，身体会同时调动肝糖原和脂肪供能；高强度运动还可能让血糖暂时上升。状态好可以打，已经很饿、头晕或乏力就先补一点，把训练质量放在硬扛前面。" },
-      { label: "上场前15分钟吃几颗软糖垫一下", effect: { bloodSugar: 12, energy: 15, satiety: 3, mood: 8 }, scienceTip: "软糖属于快速碳水，训练时间长、强度高或确实需要迅速补能时更有用。普通球局提前吃香蕉、酸奶或正常加餐，能量释放更从容，也更容易控制份量。" },
+      { id: "A", label: "空腹打球身体更轻，结束后再和大家吃夜宵", effect: { bloodSugar: -15, mood: 8, energy: -27, satiety: -10 }, isPreferred: false, knowledgeTags: ["运动与补能","规律进餐"], lowSugarRisk: true, scienceTip: "空腹打球会让身体轻一些的感觉很诱人，但距离上一餐很久时，精力和动作稳定可能先受影响。香蕉补碳水、原味酸奶补蛋白质，作为小份运动前加餐更容易掌握；份量和等待时间按身体感受调整。" },
+      { id: "B", label: "上场前吃香蕉配原味酸奶，稍作消化再开始", effect: { bloodSugar: 10, mood: 14, energy: 27, satiety: 5 }, isPreferred: true, knowledgeTags: ["运动与补能","规律进餐"], scienceTip: "香蕉配原味酸奶只是一份小加餐，给球局补碳水和蛋白质，不需要吃到饱。香蕉补碳水、原味酸奶补蛋白质，作为小份运动前加餐更容易掌握；份量和等待时间按身体感受调整。" },
     ],
   },
   {
-    id: 53, group: "evening", title: "午夜狂饿", description: "午夜，真的饿得睡不着。",
+    id: 53, group: "evening", title: "睡前饿了", description: "午夜，真的饿得睡不着。",
     image: "/images/s-bedtime.png",
     choices: [
-      { label: "煮一碗清淡的阳春面", effect: { bloodSugar: 22, energy: -8, satiety: 32, mood: 15 }, scienceTip: "深夜一大碗面会让消化负担和总能量一起上升，睡前身体还得继续忙着处理这顿饭。饿到睡不着也不用硬忍，改成小碗、加个蛋或豆腐，既能填肚子，也不会吃得太撑。" },
-      { label: "吃一个水煮蛋，服用一片镁补剂", effect: { bloodSugar: 2, energy: 5, satiety: 12, mood: -5 }, scienceTip: "水煮蛋是简单的夜间加餐，能补一点蛋白质和饱腹感。镁补剂更适合有明确需要的人；普通一晚先把白天吃够、睡前规律放松做好，往往更值得优先。" },
+      { id: "A", label: "一小碗阳春面不算多，再喝半杯果汁助消化", effect: { bloodSugar: 27, mood: 26, energy: -8, satiety: 37 }, isPreferred: false, knowledgeTags: ["夜间加餐","混合餐搭配"], scienceTip: "面条加果汁，看着都不多，却把两路快速碳水叠在了睡前。阳春面已经提供精制淀粉，再加果汁，会把液体糖集中到睡前；小份原味酸奶配半片全麦面包，同时有蛋白质和适量碳水，更容易吃到舒服而不是吃撑。" },
+      { id: "B", label: "吃一小杯原味酸奶，配半片全麦面包", effect: { bloodSugar: 8, mood: 5, energy: 10, satiety: 15 }, isPreferred: true, knowledgeTags: ["夜间加餐","混合餐搭配"], scienceTip: "真饿得睡不着时，小杯酸奶配半片全麦面包，是一份小夜宵。阳春面已经提供精制淀粉，再加果汁，会把液体糖集中到睡前；小份原味酸奶配半片全麦面包，同时有蛋白质和适量碳水，更容易吃到舒服而不是吃撑。" },
     ],
   },
   {
     id: 54, group: "evening", title: "打球后", description: "打完球，满身大汗。",
     image: "/images/s-exercise.png",
     choices: [
-      { label: "收拾东西直接回家躺着", effect: { bloodSugar: 5, energy: -8, satiety: -5, mood: 5 }, scienceTip: "高强度运动后，心率、体温和交感神经兴奋还需要一点时间回落。慢走几分钟、补水、等身体从运动档降下来，再回家休息，通常会更舒服。" },
-      { label: "留在球馆做10分钟拉伸和深呼吸", effect: { bloodSugar: 0, energy: 5, satiety: -5, mood: 8 }, scienceTip: "轻拉伸和慢呼吸很适合给训练收尾，能缓解紧绷、帮助节奏慢下来。舒服地做几分钟，让呼吸和心率慢慢回落，就是这一步最大的价值。" },
+      { id: "A", label: "球局结束就坐车回家，打算洗完澡再喝水", effect: { bloodSugar: 4, mood: 4, energy: -6, satiety: -5 }, isPreferred: false, knowledgeTags: ["运动恢复","餐后活动"], scienceTip: "运动后立刻坐车、把补水拖到洗澡后，也失去了观察身体反应的缓冲。马上坐车、把补水拖到洗澡后，容易错过头晕、心慌或异常饥饿；先慢走降心率并补水，不额外增加糖负荷，也方便确认状态再离开。" },
+      { id: "B", label: "先慢走五分钟并补水，确认身体舒服再回家", effect: { bloodSugar: 0, mood: 6, energy: 5, satiety: -5 }, isPreferred: true, knowledgeTags: ["运动恢复","餐后活动"], scienceTip: "慢走五分钟并补水，让心率逐步下来，也能确认身体状态。马上坐车、把补水拖到洗澡后，容易错过头晕、心慌或异常饥饿；先慢走降心率并补水，不额外增加糖负荷，也方便确认状态再离开。" },
     ],
   },
   {
     id: 55, group: "evening", title: "练后加餐", description: "刚举完铁，想补充营养。",
     image: "/images/s-bedtime.png",
     choices: [
-      { label: "喝一杯加了麦芽糊精的香草增肌粉", effect: { bloodSugar: 22, energy: 5, satiety: 15, mood: 8 }, scienceTip: "麦芽糊精容易消化、血糖反应较快，更适合长时间高强度训练后的快速补给。普通一次举铁要不要喝，先看全天能量、训练量和产品加糖量，别让“增肌”两个字替你决定。" },
-      { label: "喝一勺纯酪蛋白粉，加一点坚果", effect: { bloodSugar: 5, energy: 10, satiety: 18, mood: 5 }, scienceTip: "酪蛋白消化相对较慢，睡前补充可以支持夜间蛋白质合成。确实缺蛋白质时，一勺酪蛋白、牛奶或酸奶都可以；再加一点坚果，饱腹感会更稳。" },
+      { id: "A", label: "训练后有“黄金窗口”，马上喝一份香草增肌粉", effect: { bloodSugar: 29, mood: 14, energy: -6, satiety: 19 }, isPreferred: false, knowledgeTags: ["运动营养","快速碳水"], scienceTip: "训练后补蛋白质有价值，但没有窄到几分钟内必须喝增肌粉的“黄金窗口”。部分增肌粉含麦芽糊精等快速碳水；先看配料、训练量和全天蛋白，再决定是否需要。" },
+      { id: "B", label: "先看配料和全天蛋白，需要时再选无糖奶或配料简单的蛋白粉", effect: { bloodSugar: 5, mood: 0, energy: 18, satiety: 24 }, isPreferred: true, knowledgeTags: ["运动营养","快速碳水"], scienceTip: "先看配料和全天蛋白，再决定是否补充，比盲追“黄金窗口”更可靠。需要时选无糖奶或配料简单的蛋白粉；部分增肌粉含麦芽糊精，血糖负担取决于配料和总量。" },
     ],
   },
   {
     id: 56, group: "evening", title: "补剂选择", description: "睡前要不要补点什么？",
     image: "/images/s-bedtime.png",
     choices: [
-      { label: "吞几片复合维生素加钙片，求个心安", effect: { bloodSugar: 0, energy: 0, satiety: 0, mood: 5 }, scienceTip: "复合维生素和钙片解决的是明确的营养缺口，不是睡前的放松按钮。先看自己是否真的需要、总剂量有没有重复，以及会不会和疾病或药物冲突，别因为焦虑一次吞好几种。" },
-      { label: "按剂量严格服用甘氨酸镁，专注睡眠优化", effect: { bloodSugar: 0, energy: 0, satiety: 0, mood: 0 }, scienceTip: "甘氨酸镁可能适合一部分确有补充需要的人，但睡眠仍更看作息、光照、压力和整体生活习惯。肾功能有问题、长期用药或同时吃多种补剂时，先咨询专业人士再决定。" },
+      { id: "A", label: "先把镁片吃了，再刷半小时手机放松", effect: { bloodSugar: 0, mood: 5, energy: -12, satiety: 0 }, isPreferred: false, knowledgeTags: ["睡眠与血糖","补剂误区"], scienceTip: "镁片不会替你睡掉接下来的半小时，补剂和晚睡处理的不是同一个问题。睡眠不足和昼夜节律被推迟，可能影响胰岛素敏感性、食欲和第二天的食物选择；如果没有明确缺乏或专业建议，先按计划睡觉，比临时吞一片补剂再继续刷手机更扎实。" },
+      { id: "B", label: "今晚先不加补剂，按原计划关灯睡觉", effect: { bloodSugar: 0, mood: 8, energy: 15, satiety: 0 }, isPreferred: true, knowledgeTags: ["睡眠与血糖","补剂误区"], scienceTip: "按原计划关灯睡觉看起来没那么“高级”，却直接保护了睡眠时长和节律。睡眠不足和昼夜节律被推迟，可能影响胰岛素敏感性、食欲和第二天的食物选择；如果没有明确缺乏或专业建议，先按计划睡觉，比临时吞一片补剂再继续刷手机更扎实。" },
     ],
   },
   {
-    id: 57, group: "evening", title: "睡前热饮", description: "睡前想来点温热的饮品。",
+    id: 57, group: "evening", title: "睡前奶制品", description: "睡前有点饿，想来一份奶制品。",
     image: "/images/s-bedtime.png",
     choices: [
-      { label: "喝一杯温热的脱脂牛奶", effect: { bloodSugar: 10, energy: 5, satiety: 10, mood: 8 }, scienceTip: "脱脂牛奶少了部分脂肪，乳糖和蛋白质仍然都在；血糖反应更看乳糖含量、总份量和搭配。选原味、喝一杯合适份量，再留意自己是否乳糖不耐或容易反流。" },
-      { label: "吃一小杯配料只有「生牛乳」的全脂酸奶", effect: { bloodSugar: 5, energy: 8, satiety: 15, mood: 8 }, scienceTip: "发酵会消耗一部分乳糖，但酸奶里通常仍有乳糖。配料只有生牛乳，说明没有额外堆很多配料；再看营养表里有没有添加糖和总碳水，结合自己的乳糖耐受来选。" },
+      { id: "A", label: "低脂调味奶脂肪少，热一大杯当夜宵", effect: { bloodSugar: 25, mood: 10, energy: -5, satiety: 12 }, isPreferred: false, knowledgeTags: ["乳制品","食品标签"], scienceTip: "低脂调味奶的脂肪少了，但一大杯里的乳糖、添加糖和总碳水仍要计算。小杯无添加糖原味酸奶也含乳糖，但没有额外叠加游离糖，份量更容易控制。睡前选奶制品，先看添加糖、总碳水和实际份量。" },
+      { id: "B", label: "吃一小杯无添加糖原味酸奶解饿", effect: { bloodSugar: 5, mood: 0, energy: 14, satiety: 23 }, isPreferred: true, knowledgeTags: ["乳制品","食品标签"], scienceTip: "小杯无添加糖原味酸奶也不是零糖，只是没有额外叠加游离糖，份量也更清楚。小杯无添加糖原味酸奶也含乳糖，但没有额外叠加游离糖，份量更容易控制。睡前选奶制品，先看添加糖、总碳水和实际份量。" },
     ],
   },
   {
     id: 58, group: "evening", title: "回家路上", description: "周五应酬没吃主食，空腹喝了几杯白酒。回家路上突然直冒冷汗，手抖得拿不住手机。", weekendOnly: true,
     image: "/images/s-outside.png",
     choices: [
-      { label: "去路边摊吃一碗加满肥肠和辣油的粉", effect: { bloodSugar: 20, energy: -5, satiety: 30, mood: 8 }, scienceTip: "酒后冒冷汗、发抖和恶心，可能与低血糖有关，也可能是酒精中毒或其他危险状况。先别独处，联系可信的人陪同并尽快测量；意识异常、无法吞咽或症状加重时，立即呼叫急救。" },
-      { label: "去便利店买一瓶含糖运动饮料，喝完回家睡觉", effect: { bloodSugar: 12, energy: 5, satiety: 3, mood: 0 }, scienceTip: "本人清醒、能够吞咽且低血糖可能性较高时，含糖运动饮料可以提供快速碳水。喝完别一个人回家睡觉：15分钟后复测并让人陪同，症状不缓解或意识异常时立即呼叫急救。" },
+      { id: "A", label: "先吃一碗热肥肠粉，感觉缓和就自己回家睡", effect: { bloodSugar: -9, mood: 14, energy: -9, satiety: 38 }, isPreferred: false, knowledgeTags: ["酒精与血糖","低血糖识别与处理"], lowSugarRisk: true, scienceTip: "空腹饮酒后冷汗手抖，要警惕酒精抑制肝脏输出葡萄糖。肥肠粉脂肪较多，会拖慢碳水吸收；别独自回家睡，本人清醒能吞咽时先补快速碳水并测量，意识异常时立即呼叫急救。" },
+      { id: "B", label: "先联系朋友陪同，补快速碳水并尽快测量或求助", effect: { bloodSugar: 18, mood: 5, energy: 10, satiety: 5 }, isPreferred: true, knowledgeTags: ["酒精与血糖","低血糖识别与处理"], scienceTip: "先找人陪同、补快速碳水并尽快测量，比独自回家睡更安全。酒精可能抑制肝脏输出葡萄糖；本人不能吞咽或意识异常时不要强喂，应立即呼叫急救。" },
     ],
   },
 ]
@@ -578,7 +597,7 @@ export function getEventById(id: number): GameEvent | null {
   return null
 }
 
-// 在 7 天中随机选择一天，把更容易走向低血糖的事件集中在那一天
+// 在第 2～7 天中随机选择一天，把更容易走向低血糖的事件集中在那一天。
 const LOW_SUGAR_DAY_EVENT_IDS: Record<EventGroup, number[]> = {
   breakfast: [1, 10, 11],
   lunch: [19, 25],
@@ -587,17 +606,12 @@ const LOW_SUGAR_DAY_EVENT_IDS: Record<EventGroup, number[]> = {
   evening: [53, 58],
 }
 
-let specialLowSugarDay: number | null = null
-
-function getSpecialLowSugarDay(): number {
-  if (specialLowSugarDay == null) {
-    specialLowSugarDay = Math.floor(Math.random() * 7) + 1
-  }
-  return specialLowSugarDay
+export function createSpecialLowSugarDay(): number {
+  return Math.floor(Math.random() * 6) + 2
 }
 
-export function isLowSugarFocusDay(dayNumber: number): boolean {
-  return dayNumber === getSpecialLowSugarDay()
+export function isLowSugarFocusDay(dayNumber: number, specialLowSugarDay: number): boolean {
+  return dayNumber === specialLowSugarDay
 }
 
 const GROUP_ORDER: EventGroup[] = ["breakfast", "lunch", "afternoon", "dinner", "evening"]
@@ -688,12 +702,12 @@ function pickOneForGroup(
 }
 
 /** Day queue: 5 slots [breakfast, lunch, afternoon?, dinner, evening?]. Afternoon/evening 50% null. */
-export function generateDayQueue(usedIds: Set<number>, dayNumber: number): {
+export function generateDayQueue(usedIds: Set<number>, dayNumber: number, specialLowSugarDay: number): {
   queue: (GameEvent | null)[]
   eveningSkipped: boolean
 } {
   const isWeekend = dayNumber >= 6
-  const isLowSugarFocusDay = dayNumber === getSpecialLowSugarDay()
+  const isLowSugarFocusDay = dayNumber === specialLowSugarDay
   const queue: (GameEvent | null)[] = []
   const usedImagesForDay = new Set<string>()
 
@@ -786,7 +800,9 @@ export function applyDayEndDecay(stats: GameStats): GameStats {
 export const GAME_EVENTS = BREAKFAST_EVENTS
 
 // v2.3 death messages
-export const GAME_OVER_MESSAGES: Record<string, { title: string; subtitle: string }> = {
+export type GameOverReason = "bloodSugarHigh" | "bloodSugarLow" | "moodZero" | "energyZero"
+
+export const GAME_OVER_MESSAGES: Record<GameOverReason, { title: string; subtitle: string }> = {
   bloodSugarHigh: { title: "高糖危机", subtitle: "模拟状态彻底失控，这一局到此结束" },
   bloodSugarLow:  { title: "低糖危机", subtitle: "模拟状态跌破安全线，这一局到此结束" },
   moodZero:       { title: "精神崩溃", subtitle: "极度压抑后的报复性暴食，身体和心灵同时举白旗" },
@@ -805,7 +821,7 @@ function getLowBsDeathThreshold(isLowSugarFocusDay: boolean): number {
 export function checkGameOver(
   stats: GameStats,
   opts?: { isLowSugarFocusDay?: boolean }
-): { isOver: boolean; reason: string } | null {
+): { isOver: boolean; reason: GameOverReason } | null {
   const isLowSugar = opts?.isLowSugarFocusDay ?? false
   const threshold = getLowBsDeathThreshold(isLowSugar)
   if (stats.bloodSugar > 100) return { isOver: true, reason: "bloodSugarHigh" }
@@ -813,6 +829,42 @@ export function checkGameOver(
   if (stats.mood <= 0) return { isOver: true, reason: "moodZero" }
   if (stats.energy <= 0) return { isOver: true, reason: "energyZero" }
   return null
+}
+
+export const BALANCE_POLICY = {
+  firstDayGraceCount: 1,
+  firstDayHighRescueTo: 90,
+  firstDayLowRescueTo: 35,
+  firstDayEnergyRescueTo: 15,
+  firstDayMoodRescueTo: 15,
+  lowSugarDeathMinRiskActions: 2,
+  nonRiskLowRescueTo: 35,
+} as const
+
+export function canTriggerLowSugarDeath(lowSugarRiskCount: number): boolean {
+  return lowSugarRiskCount >= BALANCE_POLICY.lowSugarDeathMinRiskActions
+}
+
+export function rescueFromBoundary(
+  rawStats: GameStats,
+  reason: GameOverReason,
+  mode: "firstDay" | "nonRiskLow"
+): GameStats {
+  const rescued = { ...rawStats }
+  if (reason === "bloodSugarHigh") rescued.bloodSugar = BALANCE_POLICY.firstDayHighRescueTo
+  if (reason === "bloodSugarLow") {
+    rescued.bloodSugar = mode === "firstDay"
+      ? BALANCE_POLICY.firstDayLowRescueTo
+      : BALANCE_POLICY.nonRiskLowRescueTo
+  }
+  if (reason === "energyZero") rescued.energy = BALANCE_POLICY.firstDayEnergyRescueTo
+  if (reason === "moodZero") rescued.mood = BALANCE_POLICY.firstDayMoodRescueTo
+  return {
+    bloodSugar: clamp(rescued.bloodSugar),
+    mood: clamp(rescued.mood),
+    energy: clamp(rescued.energy),
+    satiety: clamp(rescued.satiety),
+  }
 }
 
 // Pure function: compute full next state from choice. Death uses raw values before clamp.
@@ -824,13 +876,14 @@ export interface ChoiceResultSuccess {
 }
 
 export interface ChoiceResultDeath {
-  deathReason: string
+  deathReason: GameOverReason
+  rawStats: GameStats
 }
 
 export function computeChoiceResult(
   prevStats: GameStats,
   prevTrackers: GameTrackers,
-  choice: { label: string; effect: Effect; scienceTip: string; overfull?: boolean },
+  choice: Pick<Choice, "label" | "effect" | "scienceTip" | "overfull">,
   preEffect?: Effect,
   opts?: { isLowSugarFocusDay?: boolean }
 ): ChoiceResultSuccess | ChoiceResultDeath {
@@ -839,10 +892,10 @@ export function computeChoiceResult(
   let raw = applyEffectRaw(prevStats, preEffect ?? {})
   raw = applyEffectRaw(raw, choice.effect)
 
-  if (raw.bloodSugar > 100) return { deathReason: "bloodSugarHigh" }
-  if (raw.bloodSugar <= threshold) return { deathReason: "bloodSugarLow" }
-  if (raw.energy <= 0) return { deathReason: "energyZero" }
-  if (raw.mood <= 0) return { deathReason: "moodZero" }
+  if (raw.bloodSugar > 100) return { deathReason: "bloodSugarHigh", rawStats: raw }
+  if (raw.bloodSugar <= threshold) return { deathReason: "bloodSugarLow", rawStats: raw }
+  if (raw.energy <= 0) return { deathReason: "energyZero", rawStats: raw }
+  if (raw.mood <= 0) return { deathReason: "moodZero", rawStats: raw }
 
   let s = { ...raw }
   const penalty: PostChoicePenalty = { foodComa: false, starvation: false }

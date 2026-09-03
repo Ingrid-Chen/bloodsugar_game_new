@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useGameLoop } from "@/hooks/useGameLoop"
-import { DAY_NAMES, TIME_SLOT_META } from "@/lib/game-data"
+import { DAY_NAMES, GAME_DATA_VERSION, TIME_SLOT_META } from "@/lib/game-data"
 import { getNicknameCache, getSave, setSave, clearSave, appendHistory, getHistory } from "@/lib/storage"
 import { FloatingStats } from "@/components/game/floating-stats"
 import { SwipeCard } from "@/components/game/swipe-card"
@@ -34,6 +34,8 @@ export default function Page() {
     pendingTip,
     nightlyReport,
     trackers,
+    runId,
+    choiceHistory,
     TOTAL_DAYS,
     restart,
     handleStart,
@@ -51,11 +53,15 @@ export default function Page() {
     if (phase === "gameover" || phase === "victory") {
       if (prevPhaseRef.current !== "gameover" && prevPhaseRef.current !== "victory") {
         appendHistory(nickname.trim(), {
+          id: runId,
+          timestamp: Date.now(),
           result: phase === "victory" ? "victory" : "gameover",
           reason: phase === "gameover" ? gameOverReason : undefined,
           trackers,
           dayReached: currentDay,
           stats,
+          choices: choiceHistory,
+          dataVersion: GAME_DATA_VERSION,
         })
         clearSave(nickname.trim())
       }
@@ -67,7 +73,7 @@ export default function Page() {
       const payload = { ...saveState(), nickname: nickname.trim() }
       setSave(nickname.trim(), payload)
     }
-  }, [view, nickname, phase, currentDay, trackers, stats, gameOverReason, saveState])
+  }, [view, nickname, phase, currentDay, trackers, stats, gameOverReason, runId, choiceHistory, saveState])
 
   const handleWelcomeAction = (action: "new" | "continue" | "history", name: string) => {
     const trimmed = name.trim()
@@ -217,6 +223,7 @@ export default function Page() {
             scienceTip={pendingTip.scienceTip}
             effect={pendingTip.effect}
             penalty={pendingTip.penalty}
+            boundaryWarning={pendingTip.boundaryWarning}
             onContinue={handleDismissTip}
           />
         </div>

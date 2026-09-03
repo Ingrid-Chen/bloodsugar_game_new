@@ -1,5 +1,6 @@
 import Taro from '@tarojs/taro'
 import { CLOUD_ENV_ID } from '../config/cloud'
+import { GAME_DATA_VERSION } from './game-data'
 
 export type AnalyticsEventName =
   | 'app_open'
@@ -73,7 +74,7 @@ export function trackEvent(
   eventName: AnalyticsEventName,
   properties: AnalyticsProperties = {}
 ): void {
-  const cleaned = cleanProperties(properties)
+  const cleaned = cleanProperties({ ...properties, game_data_version: GAME_DATA_VERSION })
   const appVersion = getAppVersion()
 
   if (process.env.TARO_ENV === 'weapp') {
@@ -104,4 +105,3 @@ export function trackEvent(
     }
   })
 }
-

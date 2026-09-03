@@ -1,0 +1,82 @@
+.recap-scroll { height: 100vh; }
+
+.recap-page {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: 72rpx 28rpx 90rpx;
+  color: #1e293b;
+}
+
+.recap-head { margin-bottom: 28rpx; }
+.recap-kicker {
+  display: inline-block;
+  padding: 8rpx 16rpx;
+  border: 3rpx solid #1e293b;
+  border-radius: 99rpx;
+  background: #f5c542;
+  box-shadow: 4rpx 4rpx 0 #1e293b;
+  font-size: 24rpx;
+  font-weight: 900;
+}
+.recap-title { display: block; margin-top: 22rpx; font-size: 46rpx; font-weight: 950; }
+.recap-subtitle { display: block; margin-top: 10rpx; color: #64748b; font-size: 25rpx; line-height: 1.6; }
+
+.recap-card {
+  margin-top: 24rpx;
+  padding: 26rpx;
+  border: 4rpx solid #1e293b;
+  border-radius: 24rpx;
+  background: #fffdf7;
+  box-shadow: 7rpx 7rpx 0 #1e293b;
+}
+.recap-summary { background: #fef0b8; }
+.recap-section-title { display: block; margin-bottom: 18rpx; font-size: 29rpx; font-weight: 950; }
+.recap-summary__value { display: block; color: #b45309; font-size: 32rpx; font-weight: 900; }
+.recap-empty { display: block; color: #64748b; font-size: 25rpx; line-height: 1.6; }
+
+.gap-list, .history-list { display: flex; flex-direction: column; gap: 16rpx; }
+.gap-item { display: flex; align-items: center; gap: 18rpx; }
+.gap-rank {
+  display: flex;
+  width: 50rpx;
+  height: 50rpx;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border: 3rpx solid #1e293b;
+  border-radius: 50%;
+  background: #e0f0e4;
+  font-size: 24rpx;
+  font-weight: 950;
+}
+.gap-copy { min-width: 0; flex: 1; }
+.gap-name { display: block; font-size: 27rpx; font-weight: 900; }
+.gap-note { display: block; margin-top: 4rpx; color: #64748b; font-size: 23rpx; line-height: 1.5; }
+
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 18rpx;
+  border: 3rpx solid #1e293b;
+  border-radius: 18rpx;
+  background: #fde8e8;
+}
+.history-item--victory { background: #e0f0e4; }
+.history-item__title { display: block; font-size: 24rpx; font-weight: 850; }
+.history-item__date { display: block; margin-top: 4rpx; color: #64748b; font-size: 21rpx; }
+.history-item__score { flex: none; font-size: 22rpx; font-weight: 850; }
+
+.recap-back {
+  margin-top: 34rpx;
+  border: 4rpx solid #1e293b;
+  border-radius: 22rpx;
+  color: #fff;
+  background: #5a9a6e;
+  box-shadow: 7rpx 7rpx 0 #1e293b;
+  font-size: 29rpx;
+  font-weight: 950;
+  &::after { border: 0; }
+}
+.recap-footnote { display: block; margin-top: 24rpx; color: #64748b; text-align: center; font-size: 21rpx; }

@@ -12,10 +12,11 @@ interface InlineTipCardProps {
   scienceTip: string
   effect: Effect
   penalty: PostChoicePenalty
+  boundaryWarning?: string
   onContinue: () => void
 }
 
-export function InlineTipCard({ choiceLabel, scienceTip, effect, penalty, onContinue }: InlineTipCardProps) {
+export function InlineTipCard({ choiceLabel, scienceTip, effect, penalty, boundaryWarning, onContinue }: InlineTipCardProps) {
   const [pressed, setPressed] = useState(false)
   const [countdown, setCountdown] = useState(Math.ceil(AUTO_DISMISS_MS / COUNTDOWN_INTERVAL_MS))
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -84,6 +85,13 @@ export function InlineTipCard({ choiceLabel, scienceTip, effect, penalty, onCont
           ))}
         </div>
 
+        {boundaryWarning && (
+          <div className="mx-4 mt-3 px-3 py-2 rounded-xl border-2 border-[#e8824a] bg-[#fdecd8] shadow-[2px_2px_0px_0px_#e8824a]">
+            <p className="text-xs font-black text-[#b85c2c] mb-0.5">{"🛟️ 本次没有直接结束"}</p>
+            <p className="text-[11px] text-slate-600 leading-relaxed">{boundaryWarning}</p>
+          </div>
+        )}
+
         {penalty.foodComa && (
           <div className="mx-4 mt-3 px-3 py-2 rounded-xl border-2 border-[#e05a5a] bg-[#fde8e8] shadow-[2px_2px_0px_0px_#e05a5a]">
             <p className="text-xs font-black text-[#e05a5a] mb-0.5">{"😮‍💨 吃得有点撑，状态打了折扣"}</p>
@@ -103,7 +111,10 @@ export function InlineTipCard({ choiceLabel, scienceTip, effect, penalty, onCont
             <div className="mt-0.5 shrink-0 w-6 h-6 rounded-full border-[1.5px] border-slate-800 shadow-[1px_1px_0px_0px_#1e293b] bg-[#f5c542] flex items-center justify-center text-[11px]">
               {"i"}
             </div>
-            <p className="text-[13px] leading-relaxed text-slate-600">{scienceTip}</p>
+            <div>
+              <p className="text-sm font-black text-slate-800 mb-1">{"💡 血糖小课堂"}</p>
+              <p className="text-[13px] leading-relaxed text-slate-600">{scienceTip}</p>
+            </div>
           </div>
         </div>
 

@@ -1,10 +1,11 @@
 "use client"
 
-import type { GameStats, GameTrackers, GameEvent, NightlyReport } from "@/lib/game-data"
+import { GAME_DATA_VERSION } from "@/lib/game-data"
+import type { ChoiceRecord, GameEvent, GameOverReason, GameStats, GameTrackers, NightlyReport } from "@/lib/game-data"
 
 const NICKNAME_CACHE_KEY = "bloodsugar_nickname"
-// v2 重做了全部事件数值与过饱规则；旧存档内含旧事件副本，不能安全续玩。
-const SAVE_PREFIX = "bloodsugar_save_v2_"
+// v3 更新了全部选项、数值与死亡规则；旧存档不能安全续玩。
+const SAVE_PREFIX = "bloodsugar_save_v3_"
 const HISTORY_PREFIX = "bloodsugar_history_"
 
 const NICKNAME_MAX_LEN = 20
@@ -35,19 +36,26 @@ function safeKey(prefix: string, nickname: string): string {
 
 export interface SaveData {
   nickname: string
+  dataVersion: string
+  runId: string
   phase: string
   stats: GameStats
   prevStats: GameStats
   currentDay: number
   dayQueue: (GameEvent | null)[]
   eventIndexInDay: number
-  gameOverReason: string
+  gameOverReason: GameOverReason | ""
+  pendingGameOverReason?: GameOverReason | null
   cardKey: number
   pendingTip: unknown
   nightlyReport: NightlyReport | null
   eveningSkipped: boolean
   trackers: GameTrackers
   usedIds: number[]
+  specialLowSugarDay: number
+  lowSugarRiskChoicesToday: string[]
+  firstDayGraceAvailable: boolean
+  choiceHistory: ChoiceRecord[]
 }
 
 export function getSave(nickname: string): SaveData | null {
@@ -55,7 +63,8 @@ export function getSave(nickname: string): SaveData | null {
   try {
     const raw = localStorage.getItem(safeKey(SAVE_PREFIX, nickname))
     if (!raw) return null
-    return JSON.parse(raw) as SaveData
+    const parsed = JSON.parse(raw) as SaveData
+    return parsed.dataVersion === GAME_DATA_VERSION && parsed.runId ? parsed : null
   } catch {
     return null
   }
@@ -81,10 +90,12 @@ export interface HistoryEntry {
   id: string
   timestamp: number
   result: "victory" | "gameover"
-  reason?: string
+  reason?: GameOverReason
   trackers: GameTrackers
   dayReached: number
   stats: GameStats
+  choices: ChoiceRecord[]
+  dataVersion: string
 }
 
 export function getHistory(nickname: string): HistoryEntry[] {
@@ -93,24 +104,19 @@ export function getHistory(nickname: string): HistoryEntry[] {
     const raw = localStorage.getItem(safeKey(HISTORY_PREFIX, nickname))
     if (!raw) return []
     const arr = JSON.parse(raw) as HistoryEntry[]
-    return Array.isArray(arr) ? arr : []
+    return Array.isArray(arr)
+      ? arr.map((entry) => ({ ...entry, choices: entry.choices ?? [], dataVersion: entry.dataVersion ?? "legacy" }))
+      : []
   } catch {
     return []
   }
 }
 
-export function appendHistory(nickname: string, entry: Omit<HistoryEntry, "id" | "timestamp">): void {
+export function appendHistory(nickname: string, entry: HistoryEntry): void {
   if (typeof window === "undefined") return
   try {
-    const list = getHistory(nickname)
-    const full: HistoryEntry = {
-      ...entry,
-      id: `run_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-      timestamp: Date.now(),
-    }
-    list.unshift(full)
-    const maxEntries = 50
-    const trimmed = list.slice(0, maxEntries)
+    const list = getHistory(nickname).filter((item) => item.id !== entry.id)
+    const trimmed = [entry, ...list].slice(0, 50)
     localStorage.setItem(safeKey(HISTORY_PREFIX, nickname), JSON.stringify(trimmed))
   } catch {}
 }
