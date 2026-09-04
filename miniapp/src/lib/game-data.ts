@@ -130,7 +130,7 @@ const BREAKFAST_EVENTS: GameEvent[] = [
     image: "/images/s-outside.png",
     choices: [
       { id: "A", label: "选包装写着“无糖全麦”的面包，配咖啡", effect: { bloodSugar: 30, mood: 9, energy: -8, satiety: 20 }, isPreferred: false, knowledgeTags: ["食品标签","混合餐搭配"], scienceTip: "“无糖”不等于没有淀粉，“全麦”也要看配料表里的真实排位。\n别只看包装正面，它最会说漂亮话。" },
-      { id: "B", label: "选全麦粉排第一的面包，配一枚鸡蛋", effect: { bloodSugar: 9, mood: 0, energy: 13, satiety: 28 }, isPreferred: true, knowledgeTags: ["食品标签","混合餐搭配"], scienceTip: "全麦粉排在前面更有参考价值，鸡蛋还能补上蛋白质。\n看配料，再看搭配，比认大字靠谱。" },
+      { id: "B", label: "选全麦粉排第一的面包，配一枚鸡蛋", effect: { bloodSugar: 9, mood: 0, energy: 13, satiety: 28 }, isPreferred: true, knowledgeTags: ["食品标签","混合餐搭配"], scienceTip: "全麦粉排在配料表前面，通常比包装上的“无糖全麦”四个大字更有参考价值。\n再配一枚鸡蛋，蛋白质和饱腹感也补上了。" },
     ],
   },
   {
@@ -146,7 +146,7 @@ const BREAKFAST_EVENTS: GameEvent[] = [
     image: "/images/s-morning.png",
     choices: [
       { id: "A", label: "一大碗熬得软烂的白粥，配一点咸菜", effect: { bloodSugar: 33, mood: 14, energy: -13, satiety: 29 }, isPreferred: false, knowledgeTags: ["食物结构与糊化","混合餐搭配"], scienceTip: "白粥熬得越软烂，淀粉糊化越充分；一大碗配咸菜，蛋白质又偏少。\n胃口不好也可以吃粥，把碗变小、配菜补齐。" },
-      { id: "B", label: "小碗白粥，配一份蒸蛋和一小碟嫩青菜", effect: { bloodSugar: 9, mood: 0, energy: 9, satiety: 19 }, isPreferred: true, knowledgeTags: ["食物结构与糊化","混合餐搭配"], scienceTip: "小碗白粥配蒸蛋和嫩青菜，既照顾胃口，也没有只剩软烂淀粉。\n舒服和完整，可以同时做到。" },
+      { id: "B", label: "小碗白粥，配一份蒸蛋和一小碟嫩青菜", effect: { bloodSugar: 9, mood: 0, energy: 9, satiety: 19 }, isPreferred: true, knowledgeTags: ["食物结构与糊化","混合餐搭配"], scienceTip: "白粥越软烂，淀粉糊化越充分，通常消化得越快。\n把粥换成小碗，再用蒸蛋和青菜补齐这顿饭。" },
     ],
   },
   {
@@ -154,7 +154,7 @@ const BREAKFAST_EVENTS: GameEvent[] = [
     image: "/images/s-breakfast.jpg",
     choices: [
       { id: "A", label: "水果富含纤维，先盛满一盘水果再吃别的", effect: { bloodSugar: 27, mood: 18, energy: -4, satiety: 14 }, isPreferred: false, knowledgeTags: ["进食顺序","水果形态"], scienceTip: "水果有纤维，但一大盘先下肚，仍会把不少碳水集中在餐前。\n健康食物也有份量，先别把水果盘当开胃菜。" },
-      { id: "B", label: "这些水果糖分也要算进一餐，先吃蛋和蔬菜，最后留一小碟水果", effect: { bloodSugar: 14, mood: 6, energy: 19, satiety: 39 }, isPreferred: true, knowledgeTags: ["进食顺序","水果形态"], scienceTip: "先吃蛋和蔬菜，再留一小碟水果，顺序和份量都更清楚。\n水果不用戒，给它留个合适的位置。" },
+      { id: "B", label: "这些水果糖分也要算进一餐，先吃蛋和蔬菜，最后留一小碟水果", effect: { bloodSugar: 14, mood: 6, energy: 19, satiety: 39 }, isPreferred: true, knowledgeTags: ["进食顺序","水果形态"], scienceTip: "先吃蛋和蔬菜，蛋白质和纤维能让后面的碳水吸收更平缓。\n水果留成餐后小份，不用戒，也不会一上来就吃掉一大盘。" },
     ],
   },
   {
@@ -170,7 +170,7 @@ const BREAKFAST_EVENTS: GameEvent[] = [
     image: "/images/s-breakfast.jpg",
     choices: [
       { id: "A", label: "燕麦富含膳食纤维，多泡一碗即食燕麦和蓝莓", effect: { bloodSugar: 32, mood: 14, energy: -7, satiety: 21 }, isPreferred: false, knowledgeTags: ["食物结构与糊化","混合餐搭配"], scienceTip: "即食燕麦颗粒更细，淀粉通常消化更快；一大碗也未必有足够蛋白质。\n“看起来健康”还要接受整餐搭配的考验。" },
-      { id: "B", label: "用黄油煎两个鸡蛋，配半个馒头", effect: { bloodSugar: 5, mood: 0, energy: 23, satiety: 34 }, isPreferred: true, knowledgeTags: ["食物结构与糊化","混合餐搭配"], scienceTip: "鸡蛋补蛋白质，半个馒头留适量主食，结构比想象中完整。\n少量黄油负责好吃，份量才是重点。" },
+      { id: "B", label: "用黄油煎两个鸡蛋，配半个馒头", effect: { bloodSugar: 5, mood: 0, energy: 23, satiety: 34 }, isPreferred: true, knowledgeTags: ["食物结构与糊化","混合餐搭配"], scienceTip: "即食燕麦颗粒越细，通常消化越快；“燕麦”两个字并不自动等于升糖慢。\n鸡蛋配半个馒头，蛋白质和主食反而更好掌握。" },
     ],
   },
   {
@@ -197,7 +197,7 @@ const LUNCH_EVENTS: GameEvent[] = [
     image: "/images/s-lunch-3.jpg",
     choices: [
       { id: "A", label: "土豆丝、藕片和南瓜各夹一份", effect: { bloodSugar: 34, mood: 14, energy: -14, satiety: 38 }, isPreferred: false, knowledgeTags: ["碳水识别","混合餐搭配"], scienceTip: "土豆、藕和南瓜都能贡献淀粉，三样各一份，主食就悄悄叠起来了。\n它们是好食物，但不能都假装成绿叶菜。" },
-      { id: "B", label: "绿叶菜、卤蛋，再配半份杂粮饭", effect: { bloodSugar: 5, mood: 0, energy: 9, satiety: 29 }, isPreferred: true, knowledgeTags: ["碳水识别","混合餐搭配"], scienceTip: "绿叶菜、卤蛋和半份杂粮饭，让蔬菜、蛋白质和主食各自归位。\n一眼看清结构，选择就简单多了。" },
+      { id: "B", label: "绿叶菜、卤蛋，再配半份杂粮饭", effect: { bloodSugar: 5, mood: 0, energy: 9, satiety: 29 }, isPreferred: true, knowledgeTags: ["碳水识别","混合餐搭配"], scienceTip: "土豆、藕和南瓜都含淀粉，吃进一餐时也要算进主食。\n换成绿叶菜、卤蛋和半份杂粮饭，三类食物就不会混在一起。" },
     ],
   },
   {
@@ -205,7 +205,7 @@ const LUNCH_EVENTS: GameEvent[] = [
     image: "/images/s-lunch.png",
     choices: [
       { id: "A", label: "盖饭已经荤素都有，直接拌匀大口吃更省时间", effect: { bloodSugar: 29, mood: 18, energy: -10, satiety: 39 }, isPreferred: false, knowledgeTags: ["进食顺序","碳水份量"], scienceTip: "盖饭拌匀后更顺口，也更容易大口、快速地吃下米饭和酱汁。\n赶时间没关系，先把菜肉吃几口再动米饭。" },
-      { id: "B", label: "先吃配菜和肉，再把米饭分成两次慢慢吃", effect: { bloodSugar: 14, mood: 0, energy: 14, satiety: 39 }, isPreferred: true, knowledgeTags: ["进食顺序","碳水份量"], scienceTip: "先菜肉、后米饭，能让纤维和蛋白质先到场，也自然放慢速度。\n不用换一道菜，只要换个吃法。" },
+      { id: "B", label: "先吃配菜和肉，再把米饭分成两次慢慢吃", effect: { bloodSugar: 14, mood: 0, energy: 14, satiety: 39 }, isPreferred: true, knowledgeTags: ["进食顺序","碳水份量"], scienceTip: "先吃蔬菜和肉，纤维、蛋白质会让后面的淀粉吸收更平缓。\n盖饭不用戒，把米饭留到后面、慢一点吃就行。" },
     ],
   },
   {
@@ -237,7 +237,7 @@ const LUNCH_EVENTS: GameEvent[] = [
     image: "/images/s-lunch.png",
     choices: [
       { id: "A", label: "牛肉面有肉有汤，直接拌匀趁热吃完", effect: { bloodSugar: 31, mood: 19, energy: -14, satiety: 44 }, isPreferred: false, knowledgeTags: ["碳水份量","进食顺序"], scienceTip: "牛肉和汤不会改变一大碗面仍以精制淀粉为主；吃得又多又快，餐后更容易起伏。\n先别急着拌匀扫光。" },
-      { id: "B", label: "先吃青菜、卤蛋和牛肉，再慢慢吃大半碗面", effect: { bloodSugar: 19, mood: 6, energy: 19, satiety: 47 }, isPreferred: true, knowledgeTags: ["碳水份量","进食顺序"], scienceTip: "先吃青菜、蛋和牛肉，再慢慢吃大半碗面，顺序和份量都更稳。\n面照样吃，留一点也不亏。" },
+      { id: "B", label: "先吃青菜、卤蛋和牛肉，再慢慢吃大半碗面", effect: { bloodSugar: 19, mood: 6, energy: 19, satiety: 47 }, isPreferred: true, knowledgeTags: ["碳水份量","进食顺序"], scienceTip: "青菜、蛋和牛肉先到场，纤维和蛋白质能放慢后面面条的消化吸收。\n面照样吃，慢一点、留一点，餐后起伏通常更小。" },
     ],
   },
   {
@@ -261,7 +261,7 @@ const LUNCH_EVENTS: GameEvent[] = [
     image: "/images/s-lunch-3.jpg",
     choices: [
       { id: "A", label: "奶油果酱吐司份量不大，再配无糖咖啡平衡甜味", effect: { bloodSugar: 29, mood: 14, energy: -9, satiety: 20 }, isPreferred: false, knowledgeTags: ["食品标签","混合餐搭配"], scienceTip: "无糖咖啡只能不加糖，不能抵消吐司、奶油和果酱里的淀粉、糖和脂肪。\n咖啡负责醒脑，不负责“冲销”早餐。" },
-      { id: "B", label: "选全麦金枪鱼三明治，配一杯无糖茶", effect: { bloodSugar: 14, mood: 1, energy: 14, satiety: 30 }, isPreferred: true, knowledgeTags: ["食品标签","混合餐搭配"], scienceTip: "全麦金枪鱼三明治把主食、纤维和蛋白质装进一份里，通常更耐饿。\n再看看全麦排位、酱料和份量，就更稳了。" },
+      { id: "B", label: "选全麦金枪鱼三明治，配一杯无糖茶", effect: { bloodSugar: 14, mood: 1, energy: 14, satiety: 30 }, isPreferred: true, knowledgeTags: ["食品标签","混合餐搭配"], scienceTip: "金枪鱼补蛋白质，全麦面包留一份主食，通常比奶油果酱吐司更耐饿。\n买之前确认全麦粉排位，酱料少一点就好。" },
     ],
   },
   {
@@ -285,7 +285,7 @@ const LUNCH_EVENTS: GameEvent[] = [
     image: "/images/s-lunch.png",
     choices: [
       { id: "A", label: "蔬菜越多越顶饱，选超大碗田园沙拉加面包丁", effect: { bloodSugar: 18, mood: -9, energy: -9, satiety: 16 }, isPreferred: false, knowledgeTags: ["混合餐搭配","碳水份量"], scienceTip: "超大碗蔬菜体积很大，但缺少蛋白质，面包丁也不是稳定饱腹的主角。\n菜堆得高，不等于下午一定扛得住。" },
-      { id: "B", label: "选中碗沙拉，加鸡胸、鸡蛋和半根玉米", effect: { bloodSugar: 10, mood: 8, energy: 18, satiety: 35 }, isPreferred: true, knowledgeTags: ["混合餐搭配","碳水份量"], scienceTip: "鸡胸和鸡蛋补蛋白质，半根玉米留适量主食，中碗蔬菜已经够用。\n不用追求最大碗，搭完整更重要。" },
+      { id: "B", label: "选中碗沙拉，加鸡胸、鸡蛋和半根玉米", effect: { bloodSugar: 10, mood: 8, energy: 18, satiety: 35 }, isPreferred: true, knowledgeTags: ["混合餐搭配","碳水份量"], scienceTip: "蔬菜负责体积，鸡胸和鸡蛋补蛋白质，半根玉米提供适量主食。\n真正持久的饱腹感，不只靠把菜堆成最大碗。" },
     ],
   },
   {
@@ -426,8 +426,8 @@ const DINNER_EVENTS: GameEvent[] = [
     id: 40, group: "dinner", title: "晚餐主食", description: "晚餐想选个主食。",
     image: "/images/s-dinner.png",
     choices: [
-      { id: "A", label: "糯玉米口感扎实，觉得会更耐饿", effect: { bloodSugar: 33, mood: 14, energy: -13, satiety: 33 }, isPreferred: false, knowledgeTags: ["淀粉类型","碳水份量"], scienceTip: "糯玉米口感扎实，却常含更多支链淀粉，并不代表消化一定更慢。\n“更糯”不是“更稳”，大小和搭配也要看。" },
-      { id: "B", label: "甜玉米水分更多，选一根配晚餐", effect: { bloodSugar: 15, mood: 1, energy: 10, satiety: 24 }, isPreferred: true, knowledgeTags: ["淀粉类型","碳水份量"], scienceTip: "甜玉米水分更多，同样大小下通常比糯玉米温和些，但它仍要算主食。\n选哪种都可以，别忘了看一根有多大。" },
+      { id: "A", label: "糯玉米口感扎实，觉得会更耐饿", effect: { bloodSugar: 33, mood: 14, energy: -13, satiety: 33 }, isPreferred: false, knowledgeTags: ["淀粉类型","碳水份量"], scienceTip: "糯玉米的黏糯口感来自较多支链淀粉，通常比甜玉米消化得快，餐后血糖反应也更明显。\n记住：同类主食里，越黏糯的一般越容易升糖。" },
+      { id: "B", label: "甜玉米水分更多，选一根配晚餐", effect: { bloodSugar: 15, mood: 1, energy: 10, satiety: 24 }, isPreferred: true, knowledgeTags: ["淀粉类型","碳水份量"], scienceTip: "甜玉米水分更多、淀粉相对更少，餐后血糖反应通常比糯玉米温和。\n想吃玉米可以优先选甜玉米，但它仍然要算作主食。" },
     ],
   },
   {
@@ -483,7 +483,7 @@ const DINNER_EVENTS: GameEvent[] = [
     image: "/images/s-dinner.png",
     choices: [
       { id: "A", label: "山药、莲藕和芋头都是天然食材，每样夹一点", effect: { bloodSugar: 29, mood: 14, energy: -9, satiety: 34 }, isPreferred: false, knowledgeTags: ["碳水识别","混合餐搭配"], scienceTip: "山药、莲藕和芋头都含淀粉，炖软后糊化更充分，三样一起夹会叠出多份主食。\n天然食物也会“组团加量”。" },
-      { id: "B", label: "选一种根茎当主食，再配排骨和绿叶菜", effect: { bloodSugar: 7, mood: 0, energy: 14, satiety: 34 }, isPreferred: true, knowledgeTags: ["碳水识别","混合餐搭配"], scienceTip: "只选一种根茎当主食，再配排骨和绿叶菜，碳水、蛋白质和纤维更清楚。\n不是少吃，是给每样食物安排好角色。" },
+      { id: "B", label: "选一种根茎当主食，再配排骨和绿叶菜", effect: { bloodSugar: 7, mood: 0, energy: 14, satiety: 34 }, isPreferred: true, knowledgeTags: ["碳水识别","混合餐搭配"], scienceTip: "山药、莲藕和芋头都含淀粉，炖软后也更容易消化，不能全当蔬菜。\n选一种当主食，再配排骨和绿叶菜就够了。" },
     ],
   },
   {
@@ -499,7 +499,7 @@ const DINNER_EVENTS: GameEvent[] = [
     image: "/images/s-dinner-party.png",
     choices: [
       { id: "A", label: "蔬菜多就不点主食，再夹炸腐竹和鱼丸增加饱腹", effect: { bloodSugar: 24, mood: 14, energy: -5, satiety: 26 }, isPreferred: false, knowledgeTags: ["火锅搭配","隐藏糖与油脂"], scienceTip: "不点米饭不等于没有碳水，炸腐竹、鱼丸和蘸料里仍可能藏着淀粉和糖。\n火锅最会藏东西，先把主食摆到明面上。" },
-      { id: "B", label: "蔬菜菌菇、瘦肉豆腐，再加半份主食", effect: { bloodSugar: 10, mood: 8, energy: 15, satiety: 35 }, isPreferred: true, knowledgeTags: ["火锅搭配","隐藏糖与油脂"], scienceTip: "蔬菜菌菇和瘦肉豆腐负责纤维、蛋白质，半份主食把碳水明明白白摆出来。\n火锅照样吃，结构清楚就不容易乱。" },
+      { id: "B", label: "蔬菜菌菇、瘦肉豆腐，再加半份主食", effect: { bloodSugar: 10, mood: 8, energy: 15, satiety: 35 }, isPreferred: true, knowledgeTags: ["火锅搭配","隐藏糖与油脂"], scienceTip: "炸腐竹、鱼丸和甜蘸料可能藏着淀粉、糖和脂肪，没点米饭也不等于没有碳水。\n多选蔬菜和瘦肉，再把主食留成明确的半份。" },
     ],
   },
   {
