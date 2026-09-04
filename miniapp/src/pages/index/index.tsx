@@ -236,8 +236,24 @@ function GameHeader({
       <View className='game-header__line'>
         <Text className='day-label'>第 {day} 天 · {DAY_NAMES[day - 1]}</Text>
         <View className='header-actions'>
-          <Button className='rules-button rules-button--inline' onClick={onRules}>规则</Button>
-          <Button className='rules-button rules-button--inline menu-button' onClick={onMenu}>菜单</Button>
+          <Button
+            className='rules-button rules-button--inline header-action-button header-action-button--rules'
+            onClick={(event) => {
+              event.stopPropagation()
+              onRules()
+            }}
+          >
+            规则
+          </Button>
+          <Button
+            className='rules-button rules-button--inline header-action-button header-action-button--menu'
+            onClick={(event) => {
+              event.stopPropagation()
+              onMenu()
+            }}
+          >
+            菜单
+          </Button>
         </View>
       </View>
       <StatGrid stats={stats} previousStats={previousStats} animateChanges={animateStats} />
@@ -824,9 +840,7 @@ export default function IndexPage() {
   const [showHome, setShowHome] = useState(true)
   const [showIntro, setShowIntro] = useState(false)
   const [showRecap, setShowRecap] = useState(false)
-  const [showRules, setShowRules] = useState(false)
-  const [showGameMenu, setShowGameMenu] = useState(false)
-  const [showGlossary, setShowGlossary] = useState(false)
+  const [activeOverlay, setActiveOverlay] = useState<'rules' | 'menu' | 'glossary' | null>(null)
   const [seenScienceTerms, setSeenScienceTerms] = useState<ScienceTermId[]>([])
   const [hasSave, setHasSave] = useState(false)
   const [hasHistory, setHasHistory] = useState(false)
@@ -1005,7 +1019,7 @@ export default function IndexPage() {
     setHasSave(false)
     setShowIntro(false)
     setShowRecap(false)
-    setShowGameMenu(false)
+    setActiveOverlay(null)
     setShowHome(true)
     gameSessionStartedAt.current = null
     lastSceneKey.current = ''
@@ -1022,7 +1036,7 @@ export default function IndexPage() {
         exit_type: 'save_and_home',
       })
     }
-    setShowGameMenu(false)
+    setActiveOverlay(null)
     setShowHome(true)
   }
 
@@ -1033,7 +1047,7 @@ export default function IndexPage() {
       confirmText: '重新开始',
     })
     if (!result.confirm) return
-    setShowGameMenu(false)
+    setActiveOverlay(null)
     restart()
   }
 
@@ -1056,12 +1070,12 @@ export default function IndexPage() {
   }
 
   const openIntroFromMenu = () => {
-    setShowGameMenu(false)
+    setActiveOverlay(null)
     setShowIntro(true)
   }
 
   const openRecap = () => {
-    setShowGameMenu(false)
+    setActiveOverlay(null)
     setShowIntro(false)
     setShowRecap(true)
   }
@@ -1076,6 +1090,9 @@ export default function IndexPage() {
     setShowIntro(false)
     trackEvent('intro_complete')
   }
+
+  const openRules = () => setActiveOverlay('rules')
+  const openGameMenu = () => setActiveOverlay('menu')
 
   const choose = (effect: Effect, index: number) => {
     const event = game.currentEvent
@@ -1110,7 +1127,7 @@ export default function IndexPage() {
         hasSave={hasSave}
         onStart={start}
         onContinue={resume}
-        onRules={() => setShowRules(true)}
+        onRules={openRules}
         onIntro={() => setShowIntro(true)}
         hasHistory={hasHistory}
         onHistory={openRecap}
@@ -1127,8 +1144,8 @@ export default function IndexPage() {
         eventIndex={visibleEventIndex}
         queueLength={queueLength}
         onChoose={choose}
-        onRules={() => setShowRules(true)}
-        onMenu={() => setShowGameMenu(true)}
+        onRules={openRules}
+        onMenu={openGameMenu}
       />
     )
   } else if (game.phase === 'tip' && game.pendingTip && game.currentEvent) {
@@ -1145,8 +1162,8 @@ export default function IndexPage() {
         seenScienceTerms={seenScienceTerms}
         onScienceTermsSeen={(termIds) => setSeenScienceTerms(markScienceTermsSeen(termIds))}
         onContinue={game.handleDismissTip}
-        onRules={() => setShowRules(true)}
-        onMenu={() => setShowGameMenu(true)}
+        onRules={openRules}
+        onMenu={openGameMenu}
       />
     )
   } else if (game.phase === 'day-summary') {
@@ -1171,21 +1188,18 @@ export default function IndexPage() {
     <View className='app-shell'>
       <PaperTexture />
       {content}
-      {showRules && <RulesOverlay onClose={() => setShowRules(false)} />}
-      {showGameMenu && (
+      {activeOverlay === 'rules' && <RulesOverlay onClose={() => setActiveOverlay(null)} />}
+      {activeOverlay === 'menu' && (
         <GameMenuOverlay
-          onClose={() => setShowGameMenu(false)}
+          onClose={() => setActiveOverlay(null)}
           onIntro={openIntroFromMenu}
-          onGlossary={() => {
-            setShowGameMenu(false)
-            setShowGlossary(true)
-          }}
+          onGlossary={() => setActiveOverlay('glossary')}
           onHome={returnHome}
           onRestart={confirmRestart}
           onEnd={confirmEnd}
         />
       )}
-      {showGlossary && <GlossaryOverlay onClose={() => setShowGlossary(false)} />}
+      {activeOverlay === 'glossary' && <GlossaryOverlay onClose={() => setActiveOverlay(null)} />}
     </View>
   )
 }

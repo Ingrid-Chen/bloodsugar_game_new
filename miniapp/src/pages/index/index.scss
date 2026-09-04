@@ -144,9 +144,17 @@ page,
   gap: 12rpx;
 }
 
-.menu-button {
-  color: $ink;
-  background: #fffdf7;
+.header-action-button {
+  position: relative;
+  overflow: hidden;
+
+  &--rules {
+    background: #fff5d8;
+  }
+
+  &--menu {
+    background: #fffdf7;
+  }
 }
 
 .doodle-button {
