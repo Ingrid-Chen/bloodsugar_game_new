@@ -1,6 +1,7 @@
 import Taro from '@tarojs/taro'
 import { GAME_DATA_VERSION } from './game-data'
 import type { ChoiceRecord, GameEvent, GameOverReason, GameStats, GameTrackers, NightlyReport } from './game-data'
+import type { ScienceTermId } from './science-glossary'
 
 export const NICKNAME_MAX_LEN = 8
 
@@ -10,6 +11,7 @@ const SAVE_KEY = 'bloodsugar:save:v3'
 // 引导文案和入口发生明显变化时升级版本，让老用户也能看到一次。
 const INTRO_SEEN_KEY = 'bloodsugar:intro-seen:v3'
 const HISTORY_PREFIX = 'bloodsugar:history:v1:'
+const SCIENCE_TERMS_SEEN_KEY = 'bloodsugar:science-terms-seen:v1'
 
 export interface SaveData {
   nickname: string
@@ -128,4 +130,25 @@ export function markIntroSeen(): void {
   } catch {
     // 引导状态无法保存时，不影响开始游戏。
   }
+}
+
+export function getSeenScienceTerms(): ScienceTermId[] {
+  try {
+    const value = Taro.getStorageSync(SCIENCE_TERMS_SEEN_KEY)
+    return Array.isArray(value)
+      ? value.filter((term): term is ScienceTermId => ['GI', 'GL', 'CGM', '15-15'].includes(term))
+      : []
+  } catch {
+    return []
+  }
+}
+
+export function markScienceTermsSeen(termIds: ScienceTermId[]): ScienceTermId[] {
+  const next = Array.from(new Set([...getSeenScienceTerms(), ...termIds]))
+  try {
+    Taro.setStorageSync(SCIENCE_TERMS_SEEN_KEY, next)
+  } catch {
+    // 术语学习记录无法保存时，不影响继续游戏。
+  }
+  return next
 }

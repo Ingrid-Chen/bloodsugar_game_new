@@ -21,12 +21,22 @@ import {
   appendHistory,
   getHistory,
   getNickname,
+  getSeenScienceTerms,
   getSave,
   hasSeenIntro,
   markIntroSeen,
+  markScienceTermsSeen,
   setNickname as cacheNickname,
   setSave,
 } from '../../lib/storage'
+import {
+  SCIENCE_TERMS,
+  SCIENCE_TERM_ORDER,
+  findScienceTerms,
+  getFirstEncounterCopy,
+  getFirstEncounterTerms,
+  type ScienceTermId,
+} from '../../lib/science-glossary'
 import { RecapScreen } from './recap'
 import startImage from '../../assets/images/s-start.jpg'
 import victoryImage from '../../assets/images/s-victory.jpg'
@@ -238,12 +248,14 @@ function GameHeader({
 function GameMenuOverlay({
   onClose,
   onIntro,
+  onGlossary,
   onHome,
   onRestart,
   onEnd,
 }: {
   onClose: () => void
   onIntro: () => void
+  onGlossary: () => void
   onHome: () => void
   onRestart: () => void
   onEnd: () => void
@@ -258,11 +270,38 @@ function GameMenuOverlay({
         <View className='game-menu__actions'>
           <DoodleButton onClick={onClose}>继续游戏</DoodleButton>
           <DoodleButton tone='yellow' onClick={onIntro}>查看新手引导</DoodleButton>
+          <DoodleButton tone='cream' onClick={onGlossary}>血糖小词典</DoodleButton>
           <DoodleButton tone='cream' onClick={onHome}>返回首页 · 保留进度</DoodleButton>
           <DoodleButton tone='cream' onClick={onRestart}>重新开始本局</DoodleButton>
           <Button className='game-menu__end' onClick={onEnd}>结束本局并清除进度</Button>
         </View>
       </View>
+    </View>
+  )
+}
+
+function GlossaryOverlay({ onClose }: { onClose: () => void }) {
+  return (
+    <View className='overlay'>
+      <View className='overlay__mask' onClick={onClose} />
+      <ScrollView className='modal glossary-modal doodle-card' scrollY>
+        <View className='modal__content'>
+          <Text className='modal__title'>📖 血糖小词典</Text>
+          <Text className='glossary-modal__intro'>游戏里遇到这些词时，可以随时回来复习。</Text>
+          <View className='glossary-list'>
+            {SCIENCE_TERM_ORDER.map((termId) => {
+              const term = SCIENCE_TERMS[termId]
+              return (
+                <View className='glossary-item' key={termId}>
+                  <Text className='glossary-item__title'>{term.title}</Text>
+                  <Text className='glossary-item__definition'>{term.definition}</Text>
+                </View>
+              )
+            })}
+          </View>
+          <DoodleButton onClick={onClose}>返回游戏</DoodleButton>
+        </View>
+      </ScrollView>
     </View>
   )
 }
@@ -553,6 +592,8 @@ function TipScreen({
   scienceTip,
   penalty,
   boundaryWarning,
+  seenScienceTerms,
+  onScienceTermsSeen,
   onContinue,
   onRules,
   onMenu,
@@ -565,10 +606,13 @@ function TipScreen({
   scienceTip: string
   penalty: PostChoicePenalty
   boundaryWarning?: string
+  seenScienceTerms: ScienceTermId[]
+  onScienceTermsSeen: (termIds: ScienceTermId[]) => void
   onContinue: () => void
   onRules: () => void
   onMenu: () => void
 }) {
+  const [expandedTerm, setExpandedTerm] = useState<ScienceTermId | null>(null)
   const slot = TIME_SLOT_META[event.group]
   const changes = STAT_CONFIG.flatMap((item) => {
     const value = stats[item.key] - previousStats[item.key]
@@ -580,6 +624,18 @@ function TipScreen({
     || stats.satiety <= 20
     || stats.energy <= 20
     || stats.mood <= 20
+  const encounteredTerms = useMemo(
+    () => findScienceTerms(`${choiceLabel}\n${scienceTip}`),
+    [choiceLabel, scienceTip],
+  )
+  const firstEncounterTerms = useMemo(
+    () => getFirstEncounterTerms(encounteredTerms, seenScienceTerms),
+    [encounteredTerms, seenScienceTerms],
+  )
+  const firstEncounterCopy = useMemo(
+    () => getFirstEncounterCopy(firstEncounterTerms),
+    [firstEncounterTerms],
+  )
 
   return (
     <View className='game paper-bg'>
@@ -648,8 +704,45 @@ function TipScreen({
               </View>
             )}
             <View className='science-box'>
-              <Text className='science-box__title'>💡 血糖小课堂</Text>
+              <View className='science-box__heading'>
+                <Text className='science-box__title'>💡 血糖小课堂</Text>
+                {encounteredTerms.length > 0 && firstEncounterTerms.length === 0 && (
+                  <View className='science-term-chips'>
+                    {encounteredTerms.map((termId) => (
+                      <Button
+                        className={`science-term-chip ${expandedTerm === termId ? 'science-term-chip--active' : ''}`}
+                        key={termId}
+                        onClick={() => setExpandedTerm((current) => current === termId ? null : termId)}
+                      >
+                        {SCIENCE_TERMS[termId].label} ⓘ
+                      </Button>
+                    ))}
+                  </View>
+                )}
+              </View>
               <Text className='science-box__text'>{scienceTip}</Text>
+              {firstEncounterTerms.length > 0 && (
+                <View className='science-term-note science-term-note--first'>
+                  <View className='science-term-note__copy'>
+                    <Text className='science-term-note__title'>📖 新概念 · {firstEncounterCopy.title}</Text>
+                    <Text className='science-term-note__definition'>{firstEncounterCopy.definition}</Text>
+                  </View>
+                  <Button
+                    className='science-term-note__done'
+                    onClick={() => onScienceTermsSeen(firstEncounterTerms)}
+                  >
+                    知道了
+                  </Button>
+                </View>
+              )}
+              {firstEncounterTerms.length === 0 && expandedTerm && (
+                <View className='science-term-note'>
+                  <View className='science-term-note__copy'>
+                    <Text className='science-term-note__title'>{SCIENCE_TERMS[expandedTerm].title}</Text>
+                    <Text className='science-term-note__definition'>{SCIENCE_TERMS[expandedTerm].definition}</Text>
+                  </View>
+                </View>
+              )}
             </View>
             <Text className='simulation-note'>以上为游戏化模拟效果，不代表真实个体的血糖变化。</Text>
             <DoodleButton onClick={onContinue}>继续</DoodleButton>
@@ -733,6 +826,8 @@ export default function IndexPage() {
   const [showRecap, setShowRecap] = useState(false)
   const [showRules, setShowRules] = useState(false)
   const [showGameMenu, setShowGameMenu] = useState(false)
+  const [showGlossary, setShowGlossary] = useState(false)
+  const [seenScienceTerms, setSeenScienceTerms] = useState<ScienceTermId[]>([])
   const [hasSave, setHasSave] = useState(false)
   const [hasHistory, setHasHistory] = useState(false)
   const gameSessionStartedAt = useRef<number | null>(null)
@@ -751,6 +846,7 @@ export default function IndexPage() {
     setNickname(cachedNickname)
     setHasSave(Boolean(getSave()))
     setHasHistory(Boolean(cachedNickname && getHistory(cachedNickname).length))
+    setSeenScienceTerms(getSeenScienceTerms())
   }, [])
 
   useEffect(() => {
@@ -1046,6 +1142,8 @@ export default function IndexPage() {
         scienceTip={game.pendingTip.scienceTip}
         penalty={game.pendingTip.penalty}
         boundaryWarning={game.pendingTip.boundaryWarning}
+        seenScienceTerms={seenScienceTerms}
+        onScienceTermsSeen={(termIds) => setSeenScienceTerms(markScienceTermsSeen(termIds))}
         onContinue={game.handleDismissTip}
         onRules={() => setShowRules(true)}
         onMenu={() => setShowGameMenu(true)}
@@ -1078,11 +1176,16 @@ export default function IndexPage() {
         <GameMenuOverlay
           onClose={() => setShowGameMenu(false)}
           onIntro={openIntroFromMenu}
+          onGlossary={() => {
+            setShowGameMenu(false)
+            setShowGlossary(true)
+          }}
           onHome={returnHome}
           onRestart={confirmRestart}
           onEnd={confirmEnd}
         />
       )}
+      {showGlossary && <GlossaryOverlay onClose={() => setShowGlossary(false)} />}
     </View>
   )
 }
