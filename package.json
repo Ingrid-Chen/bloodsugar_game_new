@@ -10,7 +10,8 @@
     "start": "next start",
     "lint": "eslint app components hooks lib scripts eslint.config.mjs next.config.mjs postcss.config.mjs",
     "compress-images": "node scripts/compress-images.mjs",
-    "simulate:balance": "node --experimental-strip-types scripts/simulate-random-games.ts"
+    "simulate:balance": "node --experimental-strip-types scripts/simulate-random-games.ts",
+    "audit:science-copy": "node --experimental-strip-types scripts/audit-science-copy.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
