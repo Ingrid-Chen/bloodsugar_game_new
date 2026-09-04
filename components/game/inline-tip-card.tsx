@@ -113,7 +113,7 @@ export function InlineTipCard({ choiceLabel, scienceTip, effect, penalty, bounda
             </div>
             <div>
               <p className="text-sm font-black text-slate-800 mb-1">{"💡 血糖小课堂"}</p>
-              <p className="text-[13px] leading-relaxed text-slate-600">{scienceTip}</p>
+              <p className="whitespace-pre-line text-[13px] leading-relaxed text-slate-600">{scienceTip}</p>
             </div>
           </div>
         </div>

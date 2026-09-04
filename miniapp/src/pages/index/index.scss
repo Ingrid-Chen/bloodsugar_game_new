@@ -1171,6 +1171,7 @@ page,
 
   .science-box__text {
     line-height: 1.62;
+    white-space: pre-line;
   }
 }
 
@@ -1312,6 +1313,7 @@ page,
     color: #3f4b5d;
     font-size: $type-body;
     line-height: 1.72;
+    white-space: pre-line;
   }
 }
 

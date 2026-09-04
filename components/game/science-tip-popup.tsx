@@ -95,7 +95,7 @@ export function ScienceTipPopup({ choiceLabel, scienceTip, effect, penalty, onDi
               <div className="mt-0.5 shrink-0 w-6 h-6 rounded-full border-[1.5px] border-slate-800 shadow-[1px_1px_0px_0px_#1e293b] bg-[#f5c542] flex items-center justify-center text-[11px]">
                 {"i"}
               </div>
-              <p className="text-[13px] leading-relaxed text-slate-600">{scienceTip}</p>
+              <p className="whitespace-pre-line text-[13px] leading-relaxed text-slate-600">{scienceTip}</p>
             </div>
           </div>
 
