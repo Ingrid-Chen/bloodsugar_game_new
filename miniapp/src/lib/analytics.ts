@@ -13,6 +13,7 @@ export type AnalyticsEventName =
   | 'game_restart'
   | 'game_complete'
   | 'game_over'
+  | 'feedback_submit'
 
 type AnalyticsValue = string | number | boolean
 export type AnalyticsProperties = Record<string, AnalyticsValue | null | undefined>

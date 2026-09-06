@@ -130,6 +130,12 @@ export default function AnalyticsPage() {
             <Text className='dashboard-kicker'>仅开发预览可见</Text>
             <Text className='dashboard-title'>测试数据看板</Text>
           </View>
+          <Button
+            className='feedback-admin-entry'
+            onClick={() => void Taro.navigateTo({ url: '/pages/analytics/feedback' })}
+          >
+            玩家反馈 →
+          </Button>
         </View>
 
         <View className='window-tabs'>

@@ -871,7 +871,13 @@ export function rescueFromBoundary(
 export interface ChoiceResultSuccess {
   nextStats: GameStats
   nextTrackers: GameTrackers
-  pendingTip: { choiceLabel: string; scienceTip: string; effect: Effect; penalty: PostChoicePenalty }
+  pendingTip: {
+    choiceLabel: string
+    scienceTip: string
+    knowledgeTags: string[]
+    effect: Effect
+    penalty: PostChoicePenalty
+  }
   penaltyFloaty?: string
 }
 
@@ -883,7 +889,7 @@ export interface ChoiceResultDeath {
 export function computeChoiceResult(
   prevStats: GameStats,
   prevTrackers: GameTrackers,
-  choice: Pick<Choice, "label" | "effect" | "scienceTip" | "overfull">,
+  choice: Pick<Choice, "label" | "effect" | "scienceTip" | "knowledgeTags" | "overfull">,
   preEffect?: Effect,
   opts?: { isLowSugarFocusDay?: boolean }
 ): ChoiceResultSuccess | ChoiceResultDeath {
@@ -937,7 +943,13 @@ export function computeChoiceResult(
   return {
     nextStats,
     nextTrackers,
-    pendingTip: { choiceLabel: choice.label, scienceTip: choice.scienceTip, effect: choice.effect, penalty },
+    pendingTip: {
+      choiceLabel: choice.label,
+      scienceTip: choice.scienceTip,
+      knowledgeTags: choice.knowledgeTags,
+      effect: choice.effect,
+      penalty,
+    },
     penaltyFloaty,
   }
 }

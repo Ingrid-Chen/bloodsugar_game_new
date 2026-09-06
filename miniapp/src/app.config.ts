@@ -3,7 +3,15 @@ export default defineAppConfig({
   subPackages: [
     {
       root: 'pages/analytics',
-      pages: ['index'],
+      pages: ['index', 'feedback'],
+    },
+    {
+      root: 'pages/knowledge',
+      pages: ['detail'],
+    },
+    {
+      root: 'pages/support',
+      pages: ['feedback'],
     },
   ],
   window: {

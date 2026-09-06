@@ -20,6 +20,7 @@ import {
   clearSave,
   appendHistory,
   getHistory,
+  hasSeenIntro,
   getNickname,
   getSeenScienceTerms,
   getSave,
@@ -36,6 +37,7 @@ import {
   getFirstEncounterTerms,
   type ScienceTermId,
 } from '../../lib/science-glossary'
+import { getComplementaryKnowledge } from '../../lib/knowledge-index'
 import { RecapScreen } from './recap'
 import startImage from '../../assets/images/s-start.jpg'
 import victoryImage from '../../assets/images/s-victory.jpg'
@@ -221,6 +223,24 @@ function OnboardingScreen({
           </View>
         </View>
 
+        <View className='onboarding__lesson doodle-card'>
+          <Text className='onboarding__lesson-number'>03</Text>
+          <View className='onboarding__lesson-copy'>
+            <Text className='onboarding__lead'>血糖不是只和甜食有关</Text>
+            <Text className='onboarding__body'>主食的种类和份量、食物被磨得多细、先吃什么、睡得够不够、运动强度有多大，都会改变身体处理葡萄糖的节奏。游戏会把这些藏在真实生活的选项里。</Text>
+          </View>
+        </View>
+
+        <View className='onboarding__clues'>
+          <Text className='onboarding__clues-title'>玩的时候，重点观察 4 个线索</Text>
+          <View className='onboarding__clues-grid'>
+            <Text>🥣 份量与形态</Text>
+            <Text>🥬 搭配与顺序</Text>
+            <Text>🏃 运动与补能</Text>
+            <Text>😴 睡眠与压力</Text>
+          </View>
+        </View>
+
         <View className='onboarding__mission'>
           <Text className='onboarding__mission-badge'>这次挑战</Text>
           <View className='onboarding__mission-copy'>
@@ -287,6 +307,8 @@ function GameMenuOverlay({
   onIntro,
   onGlossary,
   onHome,
+  onFeedback,
+  onContact,
   onRestart,
   onEnd,
 }: {
@@ -294,13 +316,15 @@ function GameMenuOverlay({
   onIntro: () => void
   onGlossary: () => void
   onHome: () => void
+  onFeedback: () => void
+  onContact: () => void
   onRestart: () => void
   onEnd: () => void
 }) {
   return (
     <View className='overlay'>
       <View className='overlay__mask' onClick={onClose} />
-      <View className='game-menu doodle-card'>
+      <ScrollView className='game-menu doodle-card' scrollY>
         <View className='game-menu__handle' />
         <Text className='game-menu__title'>游戏菜单</Text>
         <Text className='game-menu__subtitle'>想换个操作？当前进度会按照你的选择保存。</Text>
@@ -308,10 +332,71 @@ function GameMenuOverlay({
           <DoodleButton onClick={onClose}>继续游戏</DoodleButton>
           <DoodleButton tone='yellow' onClick={onIntro}>查看新手引导</DoodleButton>
           <DoodleButton tone='cream' onClick={onGlossary}>血糖小词典</DoodleButton>
+          <DoodleButton tone='cream' onClick={onFeedback}>意见与反馈</DoodleButton>
+          <DoodleButton tone='cream' onClick={onContact}>联系作者</DoodleButton>
           <DoodleButton tone='cream' onClick={onHome}>返回首页 · 保留进度</DoodleButton>
           <DoodleButton tone='cream' onClick={onRestart}>重新开始本局</DoodleButton>
           <Button className='game-menu__end' onClick={onEnd}>结束本局并清除进度</Button>
         </View>
+      </ScrollView>
+    </View>
+  )
+}
+
+function HomeMenuOverlay({
+  showAnalytics,
+  onClose,
+  onIntro,
+  onGlossary,
+  onHistory,
+  onFeedback,
+  onContact,
+  onAnalytics,
+}: {
+  showAnalytics: boolean
+  onClose: () => void
+  onIntro: () => void
+  onGlossary: () => void
+  onHistory: () => void
+  onFeedback: () => void
+  onContact: () => void
+  onAnalytics: () => void
+}) {
+  return (
+    <View className='overlay'>
+      <View className='overlay__mask' onClick={onClose} />
+      <ScrollView className='game-menu doodle-card' scrollY>
+        <View className='game-menu__handle' />
+        <Text className='game-menu__title'>更多内容</Text>
+        <Text className='game-menu__subtitle'>随时复习知识、查看记录，或把你的体验告诉我。</Text>
+        <View className='game-menu__actions'>
+          <DoodleButton tone='yellow' onClick={onIntro}>为什么要关注血糖</DoodleButton>
+          <DoodleButton tone='cream' onClick={onGlossary}>血糖小词典</DoodleButton>
+          <DoodleButton tone='cream' onClick={onHistory}>参与历史与复盘</DoodleButton>
+          <DoodleButton tone='cream' onClick={onFeedback}>意见与反馈</DoodleButton>
+          <DoodleButton tone='cream' onClick={onContact}>联系作者</DoodleButton>
+          {showAnalytics && <DoodleButton tone='cream' onClick={onAnalytics}>测试数据看板</DoodleButton>}
+          <Button className='game-menu__end' onClick={onClose}>关闭</Button>
+        </View>
+      </ScrollView>
+    </View>
+  )
+}
+
+function ContactOverlay({ onClose }: { onClose: () => void }) {
+  const email = 'ktsczn@163.com'
+  return (
+    <View className='overlay'>
+      <View className='overlay__mask' onClick={onClose} />
+      <View className='contact-modal doodle-card'>
+        <Text className='contact-modal__eyebrow'>联系作者</Text>
+        <Text className='contact-modal__title'>想继续聊聊？</Text>
+        <Text className='contact-modal__copy'>产品合作、内容建议或其他问题，可以通过邮箱联系。游戏体验问题更建议从“意见与反馈”提交，这样能自动带上情境信息。</Text>
+        <View className='contact-modal__email'>
+          <Text>{email}</Text>
+          <Button onClick={() => void Taro.setClipboardData({ data: email })}>复制</Button>
+        </View>
+        <DoodleButton onClick={onClose}>知道了</DoodleButton>
       </View>
     </View>
   )
@@ -336,7 +421,7 @@ function GlossaryOverlay({ onClose }: { onClose: () => void }) {
               )
             })}
           </View>
-          <DoodleButton onClick={onClose}>返回游戏</DoodleButton>
+          <DoodleButton onClick={onClose}>关闭词典</DoodleButton>
         </View>
       </ScrollView>
     </View>
@@ -408,24 +493,30 @@ function HomeScreen({
   hasSave,
   onStart,
   onContinue,
-  hasHistory,
   onHistory,
   showAnalytics,
   onAnalytics,
+  onRules,
+  onMenu,
 }: {
   nickname: string
   setNickname: (value: string) => void
   hasSave: boolean
   onStart: () => void
   onContinue: () => void
-  hasHistory: boolean
   onHistory: () => void
   showAnalytics: boolean
   onAnalytics: () => void
+  onRules: () => void
+  onMenu: () => void
 }) {
   return (
     <ScrollView className='page-scroll paper-bg' scrollY>
       <View className='home'>
+        <View className='home-top-actions'>
+          <Button className='header-action-button header-action-button--rules' onClick={onRules}>规则</Button>
+          <Button className='header-action-button header-action-button--menu' onClick={onMenu}>菜单</Button>
+        </View>
         <View className='hero-card'>
           <Image className='hero-card__image' src={startImage} mode='aspectFill' />
           <View className='hero-card__badge hero-card__badge--top'>!</View>
@@ -471,7 +562,7 @@ function HomeScreen({
           <DoodleButton tone={hasSave ? 'cream' : 'green'} onClick={onStart}>
             {hasSave ? '重新开始' : '开始冒险！'}
           </DoodleButton>
-          {hasHistory && <DoodleButton tone='cream' onClick={onHistory}>参与历史与复盘</DoodleButton>}
+          <DoodleButton tone='cream' onClick={onHistory}>参与历史与复盘</DoodleButton>
           {showAnalytics && (
             <Button className='analytics-entry' onClick={onAnalytics}>📊 测试数据看板</Button>
           )}
@@ -659,6 +750,7 @@ function TipScreen({
   event,
   choiceLabel,
   scienceTip,
+  knowledgeTags,
   penalty,
   boundaryWarning,
   seenScienceTerms,
@@ -673,6 +765,7 @@ function TipScreen({
   event: NonNullable<ReturnType<typeof useGameLoop>['currentEvent']>
   choiceLabel: string
   scienceTip: string
+  knowledgeTags: string[]
   penalty: PostChoicePenalty
   boundaryWarning?: string
   seenScienceTerms: ScienceTermId[]
@@ -705,6 +798,17 @@ function TipScreen({
     () => getFirstEncounterCopy(firstEncounterTerms),
     [firstEncounterTerms],
   )
+  const complementaryKnowledge = useMemo(
+    () => getComplementaryKnowledge(knowledgeTags, scienceTip),
+    [knowledgeTags, scienceTip],
+  )
+  const primaryKnowledgeTag = complementaryKnowledge?.tag || knowledgeTags[0] || ''
+  const takeaway = complementaryKnowledge?.takeaway || ''
+  const openKnowledgeDetail = () => {
+    if (!primaryKnowledgeTag) return
+    const url = `/pages/knowledge/detail?tag=${encodeURIComponent(primaryKnowledgeTag)}&scene=${encodeURIComponent(event.title)}`
+    void Taro.navigateTo({ url })
+  }
 
   return (
     <View className='game paper-bg'>
@@ -790,6 +894,9 @@ function TipScreen({
                 )}
               </View>
               <Text className='science-box__text'>{scienceTip}</Text>
+              {takeaway && (
+                <Text className='science-box__takeaway'>记住：{takeaway}</Text>
+              )}
               {firstEncounterTerms.length > 0 && (
                 <View className='science-term-note science-term-note--first'>
                   <View className='science-term-note__copy'>
@@ -811,6 +918,11 @@ function TipScreen({
                     <Text className='science-term-note__definition'>{SCIENCE_TERMS[expandedTerm].definition}</Text>
                   </View>
                 </View>
+              )}
+              {primaryKnowledgeTag && (
+                <Button className='science-box__more' onClick={openKnowledgeDetail}>
+                  展开学习 · {primaryKnowledgeTag} →
+                </Button>
               )}
             </View>
             <Text className='simulation-note'>以上为游戏化模拟效果，不代表真实个体的血糖变化。</Text>
@@ -891,12 +1003,13 @@ export default function IndexPage() {
   const game = useGameLoop()
   const [nickname, setNickname] = useState('')
   const [showHome, setShowHome] = useState(true)
-  const [introMode, setIntroMode] = useState<'start' | 'review' | null>(null)
+  const [introMode, setIntroMode] = useState<'start' | 'home-review' | 'game-review' | null>(null)
   const [showRecap, setShowRecap] = useState(false)
-  const [activeOverlay, setActiveOverlay] = useState<'rules' | 'menu' | 'glossary' | null>(null)
+  const [activeOverlay, setActiveOverlay] = useState<
+    'rules' | 'home-menu' | 'game-menu' | 'glossary' | 'contact' | null
+  >(null)
   const [seenScienceTerms, setSeenScienceTerms] = useState<ScienceTermId[]>([])
   const [hasSave, setHasSave] = useState(false)
-  const [hasHistory, setHasHistory] = useState(false)
   const gameSessionStartedAt = useRef<number | null>(null)
   const lastSceneKey = useRef('')
   const previousPhase = useRef(game.phase)
@@ -912,13 +1025,8 @@ export default function IndexPage() {
     const cachedNickname = getNickname()
     setNickname(cachedNickname)
     setHasSave(Boolean(getSave()))
-    setHasHistory(Boolean(cachedNickname && getHistory(cachedNickname).length))
     setSeenScienceTerms(getSeenScienceTerms())
   }, [])
-
-  useEffect(() => {
-    setHasHistory(Boolean(nickname.trim() && getHistory(nickname.trim()).length))
-  }, [nickname])
 
   useEffect(() => {
     if (showHome || introMode || showRecap || game.phase === 'start' || !nickname.trim()) return
@@ -975,7 +1083,6 @@ export default function IndexPage() {
         })
         clearSave()
         setHasSave(false)
-        setHasHistory(true)
       }
     } else if (game.phase === 'gameover') {
       trackEvent('game_over', {
@@ -1000,7 +1107,6 @@ export default function IndexPage() {
         })
         clearSave()
         setHasSave(false)
-        setHasHistory(true)
       }
     }
   }, [game.phase, game.currentDay, game.gameOverReason, game.trackers, game.runId, game.stats, game.choiceHistory, nickname])
@@ -1024,13 +1130,14 @@ export default function IndexPage() {
 
   const start = () => {
     if (!validateNickname()) return
+    const shouldShowIntro = !hasSeenIntro()
     clearSave()
     gameSessionStartedAt.current = Date.now()
     lastSceneKey.current = ''
     game.handleStart()
     setShowHome(false)
-    setIntroMode('start')
-    trackEvent('game_start', { shows_intro: true })
+    setIntroMode(shouldShowIntro ? 'start' : null)
+    trackEvent('game_start', { shows_intro: shouldShowIntro })
   }
 
   const resume = () => {
@@ -1121,9 +1228,14 @@ export default function IndexPage() {
     }
   }
 
-  const openIntroFromMenu = () => {
+  const openIntroFromGameMenu = () => {
     setActiveOverlay(null)
-    setIntroMode('review')
+    setIntroMode('game-review')
+  }
+
+  const openIntroFromHomeMenu = () => {
+    setActiveOverlay(null)
+    setIntroMode('home-review')
   }
 
   const openRecap = () => {
@@ -1144,7 +1256,21 @@ export default function IndexPage() {
   }
 
   const openRules = () => setActiveOverlay('rules')
-  const openGameMenu = () => setActiveOverlay('menu')
+  const openGameMenu = () => setActiveOverlay('game-menu')
+  const openHomeMenu = () => setActiveOverlay('home-menu')
+  const openContact = () => setActiveOverlay('contact')
+  const openFeedback = (source: 'home_menu' | 'game_menu') => {
+    setActiveOverlay(null)
+    const params = [`source=${source}`]
+    if (source === 'game_menu' && game.currentEvent) {
+      params.push(`eventId=${game.currentEvent.id}`)
+      params.push(`eventTitle=${encodeURIComponent(game.currentEvent.title)}`)
+      if (game.pendingTip?.choiceLabel) {
+        params.push(`choiceLabel=${encodeURIComponent(game.pendingTip.choiceLabel)}`)
+      }
+    }
+    void Taro.navigateTo({ url: `/pages/support/feedback?${params.join('&')}` })
+  }
 
   const choose = (effect: Effect, index: number) => {
     const event = game.currentEvent
@@ -1173,7 +1299,7 @@ export default function IndexPage() {
     content = (
       <OnboardingScreen
         onContinue={finishIntro}
-        continueLabel={introMode === 'review' ? '返回游戏' : '我明白了，开始挑战'}
+        continueLabel={introMode === 'home-review' ? '返回首页' : introMode === 'game-review' ? '返回游戏' : '我明白了，开始挑战'}
       />
     )
   } else if (showHome) {
@@ -1184,10 +1310,11 @@ export default function IndexPage() {
         hasSave={hasSave}
         onStart={start}
         onContinue={resume}
-        hasHistory={hasHistory}
         onHistory={openRecap}
         showAnalytics={showAnalytics}
         onAnalytics={() => void Taro.navigateTo({ url: '/pages/analytics/index' })}
+        onRules={openRules}
+        onMenu={openHomeMenu}
       />
     )
   } else if (game.phase === 'playing' && game.currentEvent) {
@@ -1212,6 +1339,7 @@ export default function IndexPage() {
         event={game.currentEvent}
         choiceLabel={game.pendingTip.choiceLabel}
         scienceTip={game.pendingTip.scienceTip}
+        knowledgeTags={game.pendingTip.knowledgeTags || []}
         penalty={game.pendingTip.penalty}
         boundaryWarning={game.pendingTip.boundaryWarning}
         seenScienceTerms={seenScienceTerms}
@@ -1244,17 +1372,35 @@ export default function IndexPage() {
       <PaperTexture />
       {content}
       {activeOverlay === 'rules' && <RulesOverlay onClose={() => setActiveOverlay(null)} />}
-      {activeOverlay === 'menu' && (
+      {activeOverlay === 'game-menu' && (
         <GameMenuOverlay
           onClose={() => setActiveOverlay(null)}
-          onIntro={openIntroFromMenu}
+          onIntro={openIntroFromGameMenu}
           onGlossary={() => setActiveOverlay('glossary')}
+          onFeedback={() => openFeedback('game_menu')}
+          onContact={openContact}
           onHome={returnHome}
           onRestart={confirmRestart}
           onEnd={confirmEnd}
         />
       )}
+      {activeOverlay === 'home-menu' && (
+        <HomeMenuOverlay
+          showAnalytics={showAnalytics}
+          onClose={() => setActiveOverlay(null)}
+          onIntro={openIntroFromHomeMenu}
+          onGlossary={() => setActiveOverlay('glossary')}
+          onHistory={openRecap}
+          onFeedback={() => openFeedback('home_menu')}
+          onContact={openContact}
+          onAnalytics={() => {
+            setActiveOverlay(null)
+            void Taro.navigateTo({ url: '/pages/analytics/index' })
+          }}
+        />
+      )}
       {activeOverlay === 'glossary' && <GlossaryOverlay onClose={() => setActiveOverlay(null)} />}
+      {activeOverlay === 'contact' && <ContactOverlay onClose={() => setActiveOverlay(null)} />}
     </View>
   )
 }

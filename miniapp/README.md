@@ -61,7 +61,7 @@ pnpm build:weapp
 
 ```text
 miniapp/
-├── cloudfunctions/       匿名统计云函数
+├── cloudfunctions/       匿名统计与反馈云函数
 ├── config/              Taro 构建配置
 ├── src/config/          云开发环境配置
 ├── src/assets/          小程序专用压缩图片
@@ -70,5 +70,7 @@ miniapp/
 ├── src/pages/index/     小程序页面与视觉样式
 └── project.config.json  微信项目配置和 AppID
 ```
+
+玩家反馈功能的首次部署见 [`CLOUD_FEEDBACK_SETUP.md`](./CLOUD_FEEDBACK_SETUP.md)。
 
 网页版仍在仓库根目录运行。修改 `miniapp/` 不会改变现有网页。

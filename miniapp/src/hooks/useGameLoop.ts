@@ -31,6 +31,7 @@ export type Phase = "start" | "playing" | "tip" | "day-summary" | "gameover" | "
 export interface PendingTip {
   choiceLabel: string
   scienceTip: string
+  knowledgeTags: string[]
   effect: Effect
   penalty: PostChoicePenalty
   boundaryWarning?: string
@@ -146,6 +147,7 @@ export function useGameLoop() {
           setPendingTip({
             choiceLabel: choice.label,
             scienceTip: choice.scienceTip,
+            knowledgeTags: choice.knowledgeTags,
             effect: choice.effect,
             penalty: { foodComa: false, starvation: false },
             boundaryWarning: firstDayProtected
@@ -161,6 +163,7 @@ export function useGameLoop() {
         setPendingTip({
           choiceLabel: choice.label,
           scienceTip: choice.scienceTip,
+          knowledgeTags: choice.knowledgeTags,
           effect: choice.effect,
           penalty: { foodComa: false, starvation: false },
         })

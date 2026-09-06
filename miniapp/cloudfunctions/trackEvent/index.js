@@ -16,6 +16,7 @@ const ALLOWED_EVENTS = new Set([
   'game_restart',
   'game_complete',
   'game_over',
+  'feedback_submit',
 ])
 
 const ALLOWED_PROPERTIES = new Set([
@@ -34,6 +35,8 @@ const ALLOWED_PROPERTIES = new Set([
   'peak_bs_count',
   'food_coma_count',
   'hangover_free_days',
+  'feedback_type',
+  'source',
   'game_data_version',
 ])
 

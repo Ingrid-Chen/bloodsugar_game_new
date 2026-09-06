@@ -9,7 +9,7 @@ const NICKNAME_KEY = 'bloodsugar:nickname'
 // v3 更新了全部选项、数值与死亡规则；旧存档不能安全续玩。
 const SAVE_KEY = 'bloodsugar:save:v3'
 // 引导文案和入口发生明显变化时升级版本，让老用户也能看到一次。
-const INTRO_SEEN_KEY = 'bloodsugar:intro-seen:v3'
+const INTRO_SEEN_KEY = 'bloodsugar:intro-seen:v4'
 const HISTORY_PREFIX = 'bloodsugar:history:v1:'
 const SCIENCE_TERMS_SEEN_KEY = 'bloodsugar:science-terms-seen:v1'
 

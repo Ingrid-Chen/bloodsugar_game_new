@@ -28,6 +28,22 @@ $shadow: 6rpx 7rpx 0 $ink;
   margin-bottom: 28rpx;
 }
 
+.feedback-admin-entry {
+  flex: none;
+  margin: 0 0 0 auto;
+  padding: 10rpx 16rpx;
+  border: 3rpx solid $ink;
+  border-radius: 16rpx;
+  background: #fff;
+  box-shadow: 4rpx 4rpx 0 $ink;
+  color: $ink;
+  font-size: 22rpx;
+  font-weight: 850;
+  line-height: 1.4;
+
+  &::after { border: 0; }
+}
+
 .window-tab,
 .retry-button {
   margin: 0;

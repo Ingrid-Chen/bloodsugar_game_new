@@ -10,7 +10,7 @@ const MAX_EVENTS = 20000
 const ALLOWED_WINDOWS = new Set([7, 30, 90])
 const PLAY_EVENTS = new Set(['game_start', 'game_resume', 'game_restart'])
 const CHINA_OFFSET_MS = 8 * 60 * 60 * 1000
-const ACTIVE_GAME_DATA_VERSION = '2026-09-03-v8'
+const ACTIVE_GAME_DATA_VERSIONS = new Set(['2026-09-03-v8', '2026-09-04-v9'])
 
 function clampRate(numerator, denominator) {
   if (!denominator) return 0
@@ -86,7 +86,7 @@ exports.main = async (event) => {
       const properties = item.properties && typeof item.properties === 'object'
         ? item.properties
         : {}
-      if (properties.game_data_version !== ACTIVE_GAME_DATA_VERSION) return
+      if (!ACTIVE_GAME_DATA_VERSIONS.has(properties.game_data_version)) return
       const day = dailyMap.get(date) || makeDay(date)
       dailyMap.set(date, day)
 

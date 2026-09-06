@@ -1,4 +1,5 @@
 import { Button, ScrollView, Text, View } from '@tarojs/components'
+import Taro from '@tarojs/taro'
 import { GAME_OVER_MESSAGES } from '../../lib/game-data'
 import type { HistoryEntry } from '../../lib/storage'
 import './recap.scss'
@@ -51,6 +52,10 @@ export function RecapScreen({ nickname, history, onBack }: RecapScreenProps) {
     reasonCounts.set(reason, (reasonCounts.get(reason) ?? 0) + 1)
   })
   const topReason = [...reasonCounts.entries()].sort((a, b) => b[1] - a[1])[0]
+  const openKnowledgeDetail = (tag: string, scene: string) => {
+    const url = `/pages/knowledge/detail?tag=${encodeURIComponent(tag)}&scene=${encodeURIComponent(scene)}`
+    void Taro.navigateTo({ url })
+  }
 
   return (
     <ScrollView className='recap-scroll paper-bg' scrollY>
@@ -79,12 +84,17 @@ export function RecapScreen({ nickname, history, onBack }: RecapScreenProps) {
           ) : (
             <View className='gap-list'>
               {knowledgeGaps.map((item, index) => (
-                <View className='gap-item' key={item.tag}>
+                <View
+                  className='gap-item'
+                  key={item.tag}
+                  onClick={() => openKnowledgeDetail(item.tag, item.events[0] || '')}
+                >
                   <Text className='gap-rank'>{index + 1}</Text>
                   <View className='gap-copy'>
                     <Text className='gap-name'>{item.tag}</Text>
                     <Text className='gap-note'>出现 {item.count} 次 · 相关场景：{item.events.slice(0, 2).join('、')}</Text>
                   </View>
+                  <Text className='gap-arrow'>查看详情 →</Text>
                 </View>
               ))}
             </View>

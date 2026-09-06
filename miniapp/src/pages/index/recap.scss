@@ -35,7 +35,15 @@
 .recap-empty { display: block; color: #64748b; font-size: 25rpx; line-height: 1.6; }
 
 .gap-list, .history-list { display: flex; flex-direction: column; gap: 16rpx; }
-.gap-item { display: flex; align-items: center; gap: 18rpx; }
+.gap-item {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  padding: 14rpx 12rpx;
+  border: 2rpx dashed #cbd5e1;
+  border-radius: 16rpx;
+  background: #fffaf0;
+}
 .gap-rank {
   display: flex;
   width: 50rpx;
@@ -52,6 +60,7 @@
 .gap-copy { min-width: 0; flex: 1; }
 .gap-name { display: block; font-size: 27rpx; font-weight: 900; }
 .gap-note { display: block; margin-top: 4rpx; color: #64748b; font-size: 23rpx; line-height: 1.5; }
+.gap-arrow { flex: none; color: #5a9a6e; font-size: 21rpx; font-weight: 900; }
 
 .history-item {
   display: flex;
