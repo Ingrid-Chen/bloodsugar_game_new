@@ -228,7 +228,7 @@ page,
   position: relative;
   width: 310rpx;
   height: 264rpx;
-  margin: 48rpx auto 30rpx;
+  margin: 22rpx auto 30rpx;
   transform: rotate(-2deg);
   border: $border;
   border-radius: 36rpx;
@@ -424,7 +424,7 @@ page,
 .onboarding {
   box-sizing: border-box;
   min-height: 100vh;
-  padding: 74rpx 34rpx 70rpx;
+  padding: 74rpx 34rpx 230rpx;
 
   &__kicker {
     display: table;
@@ -441,11 +441,22 @@ page,
 
   &__title {
     display: block;
-    margin-bottom: 30rpx;
+    margin-bottom: 14rpx;
     text-align: center;
     font-size: $type-display;
     font-weight: 950;
     line-height: 1.18;
+  }
+
+  &__subtitle {
+    display: block;
+    max-width: 620rpx;
+    margin: 0 auto 30rpx;
+    color: #475569;
+    text-align: center;
+    font-size: $type-body;
+    font-weight: 700;
+    line-height: 1.6;
   }
 
   &__moments {
@@ -455,9 +466,35 @@ page,
     margin-bottom: 32rpx;
   }
 
-  &__story {
-    padding: 28rpx 28rpx 30rpx;
+  &__lesson {
+    display: flex;
+    align-items: flex-start;
+    gap: 20rpx;
+    margin-bottom: 22rpx;
+    padding: 26rpx 26rpx 28rpx;
     background: #fffdf7;
+  }
+
+  &__lesson-number {
+    display: flex;
+    width: 64rpx;
+    height: 64rpx;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(-3deg);
+    border: 3rpx solid $ink;
+    border-radius: 18rpx;
+    color: #fff;
+    background: $green;
+    box-shadow: 4rpx 4rpx 0 $ink;
+    font-size: $type-small;
+    font-weight: 950;
+  }
+
+  &__lesson-copy {
+    min-width: 0;
+    flex: 1;
   }
 
   &__lead {
@@ -478,7 +515,7 @@ page,
     display: flex;
     align-items: center;
     gap: 18rpx;
-    margin: 34rpx 0 24rpx;
+    margin: 30rpx 0 24rpx;
     padding: 22rpx;
     border: 3rpx dashed $green-dark;
     border-radius: 20rpx;
@@ -524,11 +561,21 @@ page,
 
   &__note {
     display: block;
-    margin: 0 10rpx 24rpx;
+    margin: 0 10rpx 14rpx;
     color: $muted;
     text-align: center;
     font-size: $type-caption;
     line-height: 1.55;
+  }
+
+  &__footer {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 10;
+    padding: 32rpx 34rpx calc(22rpx + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(255, 248, 226, 0), #fff8e2 25%);
   }
 }
 
@@ -1674,6 +1721,119 @@ page,
     color: #3f4b5d;
     font-size: $type-body;
     line-height: 1.65;
+  }
+}
+
+.rules-modal {
+  height: 82vh;
+
+  &__summary {
+    display: block;
+    margin: -6rpx 0 24rpx;
+    padding: 18rpx 20rpx;
+    border: 3rpx solid $ink;
+    border-radius: 18rpx;
+    background: #fef0b8;
+    font-size: $type-body;
+    font-weight: 850;
+    line-height: 1.55;
+  }
+
+  &__section {
+    margin-bottom: 24rpx;
+    padding: 22rpx;
+    border: 3rpx solid $ink;
+    border-radius: 20rpx;
+    background: #fffdf7;
+
+    &--danger {
+      border-color: #d94d4d;
+      background: #fde8e8;
+    }
+  }
+
+  &__heading,
+  &__step,
+  &__aside,
+  &__tip-title,
+  &__tip-body {
+    display: block;
+  }
+
+  &__heading {
+    margin-bottom: 14rpx;
+    font-size: $type-action;
+    font-weight: 950;
+  }
+
+  &__step {
+    margin-top: 9rpx;
+    color: #3f4b5d;
+    font-size: $type-small;
+    font-weight: 700;
+    line-height: 1.58;
+  }
+
+  &__aside {
+    margin-top: 16rpx;
+    padding-top: 14rpx;
+    border-top: 2rpx dashed rgba(30, 41, 59, 0.35);
+    color: #a63434;
+    font-size: $type-small;
+    font-weight: 850;
+    line-height: 1.55;
+  }
+
+  &__tip {
+    margin-bottom: 24rpx;
+    padding: 22rpx;
+    border: 3rpx dashed $green-dark;
+    border-radius: 20rpx;
+    background: #e9f4eb;
+  }
+
+  &__tip-title {
+    color: $green-dark;
+    font-size: $type-body;
+    font-weight: 950;
+  }
+
+  &__tip-body {
+    margin-top: 8rpx;
+    color: #385344;
+    font-size: $type-small;
+    font-weight: 700;
+    line-height: 1.58;
+  }
+}
+
+.rules-stat {
+  margin-top: 14rpx;
+  padding: 18rpx 20rpx;
+  border: 3rpx solid $ink;
+  border-radius: 18rpx;
+
+  &--blood { background: #fde8e8; }
+  &--mood { background: #fef6d4; }
+  &--energy { background: #e0f0e4; }
+  &--satiety { background: #fdecd8; }
+
+  &__title,
+  &__body {
+    display: block;
+  }
+
+  &__title {
+    font-size: $type-small;
+    font-weight: 950;
+    line-height: 1.45;
+  }
+
+  &__body {
+    margin-top: 8rpx;
+    color: #3f4b5d;
+    font-size: $type-small;
+    line-height: 1.55;
   }
 }
 

@@ -23,7 +23,6 @@ import {
   getNickname,
   getSeenScienceTerms,
   getSave,
-  hasSeenIntro,
   markIntroSeen,
   markScienceTermsSeen,
   setNickname as cacheNickname,
@@ -178,12 +177,19 @@ function StatGrid({
   )
 }
 
-function OnboardingScreen({ onContinue }: { onContinue: () => void }) {
+function OnboardingScreen({
+  onContinue,
+  continueLabel = '我明白了，开始挑战',
+}: {
+  onContinue: () => void
+  continueLabel?: string
+}) {
   return (
     <ScrollView className='page-scroll paper-bg' scrollY>
       <View className='onboarding'>
-        <View className='onboarding__kicker'>先从你的一天开始</View>
-        <Text className='onboarding__title'>为什么血糖和我有关系？</Text>
+        <View className='onboarding__kicker'>开局前 · 30 秒</View>
+        <Text className='onboarding__title'>为什么要关注血糖？</Text>
+        <Text className='onboarding__subtitle'>困、馋、饿的原因不只一个；血糖变化，是理解日常精力与食欲的一条重要线索。</Text>
         <View className='onboarding__moments'>
           <View className='moment-chip moment-chip--green'>
             <Text className='moment-chip__emoji'>🥱</Text>
@@ -198,19 +204,34 @@ function OnboardingScreen({ onContinue }: { onContinue: () => void }) {
             <Text>明明吃过，却很快又饿</Text>
           </View>
         </View>
-        <View className='onboarding__story doodle-card'>
-          <Text className='onboarding__lead'>这些感受的原因不只一个。</Text>
-          <Text className='onboarding__body'>血糖变化，是理解身体如何处理一顿饭的一扇窗口。早餐、奶茶、加班餐、饭后活动——一次选择未必说明什么，但每天重复的模式，值得你早点看懂。</Text>
+
+        <View className='onboarding__lesson doodle-card'>
+          <Text className='onboarding__lesson-number'>01</Text>
+          <View className='onboarding__lesson-copy'>
+            <Text className='onboarding__lead'>吃完一顿饭，身体在做什么？</Text>
+            <Text className='onboarding__body'>米饭、面包和水果里的碳水会被分解成葡萄糖进入血液，血糖上升本来就是正常反应。更值得留意的，是它是否反复升得太快、太高，或因为长时间不吃和错误补救而降得过低。</Text>
+          </View>
         </View>
+
+        <View className='onboarding__lesson doodle-card'>
+          <Text className='onboarding__lesson-number'>02</Text>
+          <View className='onboarding__lesson-copy'>
+            <Text className='onboarding__lead'>没得糖尿病，也值得了解吗？</Text>
+            <Text className='onboarding__body'>当然值得。食物种类、份量、搭配、进食顺序、睡眠和运动，都会影响一整天的血糖节奏。读懂这些选择，不需要等到生病以后才开始。</Text>
+          </View>
+        </View>
+
         <View className='onboarding__mission'>
           <Text className='onboarding__mission-badge'>这次挑战</Text>
           <View className='onboarding__mission-copy'>
             <Text className='onboarding__mission-title'>不是把血糖压得越低越好，也不是戒掉所有碳水</Text>
-            <Text className='onboarding__mission-text'>做选择、看反馈，找到兼顾精力、心情和饱腹的稳定节奏。</Text>
+            <Text className='onboarding__mission-text'>你会经历七天生活情境：做选择、看反馈，找到兼顾血糖、精力、心情和饱腹的稳定节奏。</Text>
           </View>
         </View>
-        <Text className='onboarding__note'>这不是健康测试，也不要求你监测血糖。</Text>
-        <DoodleButton onClick={onContinue}>开始看看我的一天</DoodleButton>
+        <View className='onboarding__footer'>
+          <Text className='onboarding__note'>这不是健康测试，也不要求你监测血糖。</Text>
+          <DoodleButton onClick={onContinue}>{continueLabel}</DoodleButton>
+        </View>
       </View>
     </ScrollView>
   )
@@ -326,14 +347,53 @@ function RulesOverlay({ onClose }: { onClose: () => void }) {
   return (
     <View className='overlay'>
       <View className='overlay__mask' onClick={onClose} />
-      <ScrollView className='modal doodle-card' scrollY>
+      <ScrollView className='modal rules-modal doodle-card' scrollY>
         <View className='modal__content'>
-          <Text className='modal__title'>活动规则</Text>
-          <Text className='modal__paragraph'>目标：在七天生活情境中做出饮食与生活选择，让血糖、心情、精力和饱腹保持在安全范围。</Text>
-          <Text className='modal__paragraph'>操作：每个情境从左右两个选项中选择一个，随后查看数值影响和科普说明。</Text>
-          <Text className='modal__paragraph'>说明：游戏中的数值均为模拟分数，不是真实血糖或医学检测结果。</Text>
+          <Text className='modal__title'>游戏规则</Text>
+          <Text className='rules-modal__summary'>目标很简单：在 7 天生活情境中做选择，别让四项状态失控。</Text>
+
+          <View className='rules-modal__section'>
+            <Text className='rules-modal__heading'>怎么玩？</Text>
+            <Text className='rules-modal__step'>1. 每个情境会出现两个选项，可左右滑动卡片，也可直接点击。</Text>
+            <Text className='rules-modal__step'>2. 选择后先看四项数值变化，再阅读“血糖小课堂”。</Text>
+            <Text className='rules-modal__step'>3. 一天结束后状态会结算；坚持完成第 7 天即可通关。</Text>
+          </View>
+
+          <View className='rules-modal__section'>
+            <Text className='rules-modal__heading'>四项数值要追求什么？</Text>
+            <View className='rules-stat rules-stat--blood'>
+              <Text className='rules-stat__title'>🩸 血糖：追求平稳，不是越低越好</Text>
+              <Text className='rules-stat__body'>40–60 是游戏中的理想区间；低于 40 或达到 80 会进入警戒。份量过大、精制碳水集中，容易升得太高；长时间不吃、空腹高强度运动等连续行为，则可能降得过低。</Text>
+            </View>
+            <View className='rules-stat rules-stat--mood'>
+              <Text className='rules-stat__title'>😊 心情：代表选择能不能舒服地坚持</Text>
+              <Text className='rules-stat__body'>过度克制、压力和糟糕体验会消耗心情。尽量保持较高，降到 0 会结束本局。</Text>
+            </View>
+            <View className='rules-stat rules-stat--energy'>
+              <Text className='rules-stat__title'>⚡ 精力：代表当下的体力与清醒程度</Text>
+              <Text className='rules-stat__body'>空腹、熬夜和过度运动会消耗精力。尽量保持较高，降到 0 会结束本局。</Text>
+            </View>
+            <View className='rules-stat rules-stat--satiety'>
+              <Text className='rules-stat__title'>🍊 饱腹：追求舒服，不是越满越好</Text>
+              <Text className='rules-stat__body'>40–75 较舒服；过低会挨饿，过高会吃撑，并连带影响心情和精力。</Text>
+            </View>
+          </View>
+
+          <View className='rules-modal__section rules-modal__section--danger'>
+            <Text className='rules-modal__heading'>什么情况会结束游戏？</Text>
+            <Text className='rules-modal__step'>• 血糖模拟分超过 100，触发“高糖危机”</Text>
+            <Text className='rules-modal__step'>• 连续做出至少 2 次低糖风险行为，又跌破当日危险线，触发“低糖危机”</Text>
+            <Text className='rules-modal__step'>• 心情或精力降到 0</Text>
+            <Text className='rules-modal__aside'>第 1 天首次越界有一次新手保护；之后再越界，本局就会结束。</Text>
+          </View>
+
+          <View className='rules-modal__tip'>
+            <Text className='rules-modal__tip-title'>别只找“看起来最健康”的答案</Text>
+            <Text className='rules-modal__tip-body'>同一种食物，份量、搭配、加工方式和当时的身体状态都可能改变结果。选完认真看看小课堂，才是这局真正要带走的东西。</Text>
+          </View>
+
           <View className='notice-box'>
-            <Text>本小程序仅用于一般健康科普，不构成疾病诊断、治疗或个体化医疗建议。</Text>
+            <Text>所有数值都是 0–100 的游戏模拟分数，不是真实血糖或医学检测结果。本小程序仅用于一般健康科普，不构成疾病诊断、治疗或个体化医疗建议。</Text>
           </View>
           <DoodleButton onClick={onClose}>我知道了</DoodleButton>
         </View>
@@ -348,8 +408,6 @@ function HomeScreen({
   hasSave,
   onStart,
   onContinue,
-  onRules,
-  onIntro,
   hasHistory,
   onHistory,
   showAnalytics,
@@ -360,8 +418,6 @@ function HomeScreen({
   hasSave: boolean
   onStart: () => void
   onContinue: () => void
-  onRules: () => void
-  onIntro: () => void
   hasHistory: boolean
   onHistory: () => void
   showAnalytics: boolean
@@ -370,8 +426,6 @@ function HomeScreen({
   return (
     <ScrollView className='page-scroll paper-bg' scrollY>
       <View className='home'>
-        <Button className='rules-button' onClick={onRules}>📖 规则</Button>
-
         <View className='hero-card'>
           <Image className='hero-card__image' src={startImage} mode='aspectFill' />
           <View className='hero-card__badge hero-card__badge--top'>!</View>
@@ -417,7 +471,6 @@ function HomeScreen({
           <DoodleButton tone={hasSave ? 'cream' : 'green'} onClick={onStart}>
             {hasSave ? '重新开始' : '开始冒险！'}
           </DoodleButton>
-          <DoodleButton tone='yellow' onClick={onIntro}>为什么要关注血糖？</DoodleButton>
           {hasHistory && <DoodleButton tone='cream' onClick={onHistory}>参与历史与复盘</DoodleButton>}
           {showAnalytics && (
             <Button className='analytics-entry' onClick={onAnalytics}>📊 测试数据看板</Button>
@@ -838,7 +891,7 @@ export default function IndexPage() {
   const game = useGameLoop()
   const [nickname, setNickname] = useState('')
   const [showHome, setShowHome] = useState(true)
-  const [showIntro, setShowIntro] = useState(false)
+  const [introMode, setIntroMode] = useState<'start' | 'review' | null>(null)
   const [showRecap, setShowRecap] = useState(false)
   const [activeOverlay, setActiveOverlay] = useState<'rules' | 'menu' | 'glossary' | null>(null)
   const [seenScienceTerms, setSeenScienceTerms] = useState<ScienceTermId[]>([])
@@ -868,13 +921,13 @@ export default function IndexPage() {
   }, [nickname])
 
   useEffect(() => {
-    if (showHome || showIntro || showRecap || game.phase === 'start' || !nickname.trim()) return
+    if (showHome || introMode || showRecap || game.phase === 'start' || !nickname.trim()) return
     setSave({ nickname: nickname.trim(), ...game.saveState() })
     setHasSave(true)
-  }, [showHome, showIntro, showRecap, nickname, game.phase, game.stats, game.currentDay, game.eventIndexInDay, game.saveState])
+  }, [showHome, introMode, showRecap, nickname, game.phase, game.stats, game.currentDay, game.eventIndexInDay, game.saveState])
 
   useEffect(() => {
-    if (showHome || showIntro || game.phase !== 'playing' || !game.currentEvent) return
+    if (showHome || introMode || game.phase !== 'playing' || !game.currentEvent) return
     const sceneKey = `${game.currentDay}:${game.eventIndexInDay}:${game.currentEvent.id}`
     if (lastSceneKey.current === sceneKey) return
     lastSceneKey.current = sceneKey
@@ -883,7 +936,7 @@ export default function IndexPage() {
       event_id: game.currentEvent.id,
       event_group: game.currentEvent.group,
     })
-  }, [showHome, showIntro, game.phase, game.currentDay, game.eventIndexInDay, game.currentEvent])
+  }, [showHome, introMode, game.phase, game.currentDay, game.eventIndexInDay, game.currentEvent])
 
   useEffect(() => {
     const priorPhase = previousPhase.current
@@ -971,14 +1024,13 @@ export default function IndexPage() {
 
   const start = () => {
     if (!validateNickname()) return
-    const showsIntro = !hasSeenIntro()
     clearSave()
     gameSessionStartedAt.current = Date.now()
     lastSceneKey.current = ''
     game.handleStart()
     setShowHome(false)
-    setShowIntro(showsIntro)
-    trackEvent('game_start', { shows_intro: showsIntro })
+    setIntroMode('start')
+    trackEvent('game_start', { shows_intro: true })
   }
 
   const resume = () => {
@@ -993,7 +1045,7 @@ export default function IndexPage() {
     gameSessionStartedAt.current = Date.now()
     lastSceneKey.current = ''
     setShowHome(false)
-    setShowIntro(false)
+    setIntroMode(null)
     trackEvent('game_resume', {
       day: saved.currentDay,
       phase: saved.phase,
@@ -1007,7 +1059,7 @@ export default function IndexPage() {
     lastSceneKey.current = ''
     game.restart()
     setShowHome(false)
-    setShowIntro(false)
+    setIntroMode(null)
     trackEvent('game_restart', {
       day: game.currentDay,
       phase: game.phase,
@@ -1017,7 +1069,7 @@ export default function IndexPage() {
   const endAndGoHome = () => {
     clearSave()
     setHasSave(false)
-    setShowIntro(false)
+    setIntroMode(null)
     setShowRecap(false)
     setActiveOverlay(null)
     setShowHome(true)
@@ -1071,12 +1123,12 @@ export default function IndexPage() {
 
   const openIntroFromMenu = () => {
     setActiveOverlay(null)
-    setShowIntro(true)
+    setIntroMode('review')
   }
 
   const openRecap = () => {
     setActiveOverlay(null)
-    setShowIntro(false)
+    setIntroMode(null)
     setShowRecap(true)
   }
 
@@ -1087,8 +1139,8 @@ export default function IndexPage() {
 
   const finishIntro = () => {
     markIntroSeen()
-    setShowIntro(false)
-    trackEvent('intro_complete')
+    trackEvent('intro_complete', { source: introMode || 'unknown' })
+    setIntroMode(null)
   }
 
   const openRules = () => setActiveOverlay('rules')
@@ -1117,8 +1169,13 @@ export default function IndexPage() {
         onBack={closeRecapToHome}
       />
     )
-  } else if (showIntro) {
-    content = <OnboardingScreen onContinue={finishIntro} />
+  } else if (introMode) {
+    content = (
+      <OnboardingScreen
+        onContinue={finishIntro}
+        continueLabel={introMode === 'review' ? '返回游戏' : '我明白了，开始挑战'}
+      />
+    )
   } else if (showHome) {
     content = (
       <HomeScreen
@@ -1127,8 +1184,6 @@ export default function IndexPage() {
         hasSave={hasSave}
         onStart={start}
         onContinue={resume}
-        onRules={openRules}
-        onIntro={() => setShowIntro(true)}
         hasHistory={hasHistory}
         onHistory={openRecap}
         showAnalytics={showAnalytics}
