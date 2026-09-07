@@ -360,16 +360,9 @@ page,
 .nickname-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 18rpx;
   font-size: $type-action;
   font-weight: 800;
-}
-
-.nickname-note {
-  color: #64748b;
-  font-size: $type-caption;
-  font-weight: 600;
 }
 
 .home-stats {

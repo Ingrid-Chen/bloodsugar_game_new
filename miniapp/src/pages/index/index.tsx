@@ -530,8 +530,7 @@ function HomeScreen({
 
         <View className='speech doodle-card'>
           <View className='nickname-row'>
-            <Text>我的游戏称呼：{nickname}</Text>
-            <Text className='nickname-note'>仅用于本机游戏记录，不会上传</Text>
+            <Text>我是 {nickname}</Text>
           </View>
           <Text className='speech__line'>我要做出更明智的生活选择，健康生活七天</Text>
         </View>
