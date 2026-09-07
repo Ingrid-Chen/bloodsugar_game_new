@@ -3,15 +3,13 @@ import { GAME_DATA_VERSION } from './game-data'
 import type { ChoiceRecord, GameEvent, GameOverReason, GameStats, GameTrackers, NightlyReport } from './game-data'
 import type { ScienceTermId } from './science-glossary'
 
-export const NICKNAME_MAX_LEN = 8
+const PLAYER_NAME_MAX_LEN = 8
 
-const NICKNAME_KEY = 'bloodsugar:nickname'
-// v3 更新了全部选项、数值与死亡规则；旧存档不能安全续玩。
-const SAVE_KEY = 'bloodsugar:save:v3'
-// 引导文案和入口发生明显变化时升级版本，让老用户也能看到一次。
-const INTRO_SEEN_KEY = 'bloodsugar:intro-seen:v4'
-const HISTORY_PREFIX = 'bloodsugar:history:v1:'
-const SCIENCE_TERMS_SEEN_KEY = 'bloodsugar:science-terms-seen:v1'
+// 上线前隐私整改后统一换用新命名空间，避免测试期存档和参与历史带入新版本。
+const SAVE_KEY = 'bloodsugar:save:v4'
+const INTRO_SEEN_KEY = 'bloodsugar:intro-seen:v5'
+const HISTORY_PREFIX = 'bloodsugar:history:v2:'
+const SCIENCE_TERMS_SEEN_KEY = 'bloodsugar:science-terms-seen:v2'
 
 export interface SaveData {
   nickname: string
@@ -50,23 +48,7 @@ export interface HistoryEntry {
 }
 
 function historyKey(nickname: string): string {
-  return `${HISTORY_PREFIX}${encodeURIComponent(nickname.trim().slice(0, NICKNAME_MAX_LEN))}`
-}
-
-export function getNickname(): string {
-  try {
-    return String(Taro.getStorageSync(NICKNAME_KEY) || '')
-  } catch {
-    return ''
-  }
-}
-
-export function setNickname(value: string): void {
-  try {
-    Taro.setStorageSync(NICKNAME_KEY, value.trim().slice(0, NICKNAME_MAX_LEN))
-  } catch {
-    // 本地存储不可用时仍允许继续游戏，只是不保留昵称。
-  }
+  return `${HISTORY_PREFIX}${encodeURIComponent(nickname.trim().slice(0, PLAYER_NAME_MAX_LEN))}`
 }
 
 export function getSave(): SaveData | null {
