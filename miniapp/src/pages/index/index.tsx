@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Button, Image, Input, ScrollView, Text, View } from '@tarojs/components'
+import { Button, Image, ScrollView, Text, View } from '@tarojs/components'
 import type { BaseEventOrig, ITouchEvent } from '@tarojs/components/types/common'
 import Taro from '@tarojs/taro'
 import { useGameLoop } from '../../hooks/useGameLoop'
@@ -16,17 +16,14 @@ import {
 } from '../../lib/game-data'
 import { trackEvent } from '../../lib/analytics'
 import {
-  NICKNAME_MAX_LEN,
   clearSave,
   appendHistory,
   getHistory,
   hasSeenIntro,
-  getNickname,
   getSeenScienceTerms,
   getSave,
   markIntroSeen,
   markScienceTermsSeen,
-  setNickname as cacheNickname,
   setSave,
 } from '../../lib/storage'
 import {
@@ -73,6 +70,8 @@ const IMAGE_MAP: Record<string, string> = {
   '/images/s-tea-4.jpg': teaFourImage,
   '/images/s-bedtime.png': bedtimeImage,
 }
+
+const DEFAULT_PLAYER_NAME = '小糖'
 
 function getImage(path?: string): string {
   return (path && IMAGE_MAP[path]) || startImage
@@ -489,7 +488,6 @@ function RulesOverlay({ onClose }: { onClose: () => void }) {
 
 function HomeScreen({
   nickname,
-  setNickname,
   hasSave,
   onStart,
   onContinue,
@@ -500,7 +498,6 @@ function HomeScreen({
   onMenu,
 }: {
   nickname: string
-  setNickname: (value: string) => void
   hasSave: boolean
   onStart: () => void
   onContinue: () => void
@@ -533,14 +530,8 @@ function HomeScreen({
 
         <View className='speech doodle-card'>
           <View className='nickname-row'>
-            <Text>我是</Text>
-            <Input
-              className='nickname-input'
-              value={nickname}
-              maxlength={NICKNAME_MAX_LEN}
-              placeholder='小糖'
-              onInput={(event) => setNickname(String(event.detail.value).slice(0, NICKNAME_MAX_LEN))}
-            />
+            <Text>我的游戏称呼：{nickname}</Text>
+            <Text className='nickname-note'>仅用于本机游戏记录，不会上传</Text>
           </View>
           <Text className='speech__line'>我要做出更明智的生活选择，健康生活七天</Text>
         </View>
@@ -1001,7 +992,7 @@ function EndScreen({
 
 export default function IndexPage() {
   const game = useGameLoop()
-  const [nickname, setNickname] = useState('')
+  const nickname = DEFAULT_PLAYER_NAME
   const [showHome, setShowHome] = useState(true)
   const [introMode, setIntroMode] = useState<'start' | 'home-review' | 'game-review' | null>(null)
   const [showRecap, setShowRecap] = useState(false)
@@ -1022,8 +1013,6 @@ export default function IndexPage() {
   }, [])
 
   useEffect(() => {
-    const cachedNickname = getNickname()
-    setNickname(cachedNickname)
     setHasSave(Boolean(getSave()))
     setSeenScienceTerms(getSeenScienceTerms())
   }, [])
@@ -1117,19 +1106,7 @@ export default function IndexPage() {
     [game.dayQueue, game.eventIndexInDay]
   )
 
-  const validateNickname = (): string | null => {
-    const value = nickname.trim().slice(0, NICKNAME_MAX_LEN)
-    if (!value) {
-      Taro.showToast({ title: '请先填写昵称', icon: 'none' })
-      return null
-    }
-    cacheNickname(value)
-    setNickname(value)
-    return value
-  }
-
   const start = () => {
-    if (!validateNickname()) return
     const shouldShowIntro = !hasSeenIntro()
     clearSave()
     gameSessionStartedAt.current = Date.now()
@@ -1146,8 +1123,6 @@ export default function IndexPage() {
       setHasSave(false)
       return
     }
-    setNickname(saved.nickname)
-    cacheNickname(saved.nickname)
     game.restoreSave(saved)
     gameSessionStartedAt.current = Date.now()
     lastSceneKey.current = ''
@@ -1160,7 +1135,6 @@ export default function IndexPage() {
   }
 
   const restart = () => {
-    if (!validateNickname()) return
     clearSave()
     gameSessionStartedAt.current = Date.now()
     lastSceneKey.current = ''
@@ -1306,7 +1280,6 @@ export default function IndexPage() {
     content = (
       <HomeScreen
         nickname={nickname}
-        setNickname={setNickname}
         hasSave={hasSave}
         onStart={start}
         onContinue={resume}

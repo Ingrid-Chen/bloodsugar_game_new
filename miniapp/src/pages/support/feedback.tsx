@@ -1,4 +1,4 @@
-import { Button, Input, ScrollView, Text, Textarea, View } from '@tarojs/components'
+import { Button, ScrollView, Text, Textarea, View } from '@tarojs/components'
 import Taro, { useRouter } from '@tarojs/taro'
 import { useMemo, useState } from 'react'
 import { trackEvent } from '../../lib/analytics'
@@ -13,7 +13,7 @@ const FEEDBACK_TYPES = [
   '其他',
 ] as const
 
-const CONTACT_TYPES = ['邮箱', '微信号', '小红书号'] as const
+const AUTHOR_EMAIL = 'ktsczn@163.com'
 
 function decode(value?: string): string {
   if (!value) return ''
@@ -28,8 +28,6 @@ export default function FeedbackPage() {
   const router = useRouter()
   const [feedbackType, setFeedbackType] = useState<(typeof FEEDBACK_TYPES)[number]>('产品建议')
   const [content, setContent] = useState('')
-  const [contactType, setContactType] = useState<(typeof CONTACT_TYPES)[number]>('邮箱')
-  const [contact, setContact] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submittedId, setSubmittedId] = useState('')
 
@@ -55,8 +53,6 @@ export default function FeedbackPage() {
         data: {
           feedbackType,
           content: cleanContent,
-          contactType: contact.trim() ? contactType : '',
-          contact: contact.trim(),
           source: context.source,
           eventId: context.eventId || undefined,
           eventTitle: context.eventTitle,
@@ -85,7 +81,13 @@ export default function FeedbackPage() {
         <View className='feedback-success__icon'>✓</View>
         <Text className='feedback-success__title'>收到了，谢谢你</Text>
         <Text className='feedback-success__text'>反馈编号：{submittedId}</Text>
-        <Text className='feedback-success__note'>如果留了联系方式，作者可能会就这次反馈与你联系。</Text>
+        <Text className='feedback-success__note'>反馈已匿名记录。如希望收到回复，可以通过作者邮箱主动联系。</Text>
+        <Button
+          className='feedback-email-button'
+          onClick={() => void Taro.setClipboardData({ data: AUTHOR_EMAIL })}
+        >
+          复制作者邮箱：{AUTHOR_EMAIL}
+        </Button>
         <Button className='feedback-primary' onClick={() => void Taro.navigateBack()}>返回小程序</Button>
       </View>
     )
@@ -133,30 +135,18 @@ export default function FeedbackPage() {
           <Text className='feedback-count'>{content.length}/800</Text>
         </View>
 
-        <View className='feedback-card'>
-          <Text className='feedback-section-title'>联系方式（选填）</Text>
-          <Text className='feedback-help'>不填也可以匿名提交。填写后仅用于回复本次反馈。</Text>
-          <View className='contact-tabs'>
-            {CONTACT_TYPES.map((item) => (
-              <Button
-                className={`contact-tab ${contactType === item ? 'contact-tab--active' : ''}`}
-                key={item}
-                onClick={() => setContactType(item)}
-              >
-                {item}
-              </Button>
-            ))}
-          </View>
-          <Input
-            className='feedback-input'
-            value={contact}
-            maxlength={100}
-            placeholder={`请输入${contactType}（选填）`}
-            onInput={(event) => setContact(String(event.detail.value).slice(0, 100))}
-          />
+        <View className='feedback-card feedback-contact-card'>
+          <Text className='feedback-section-title'>希望收到回复？</Text>
+          <Text className='feedback-help'>本页面只接收匿名反馈，不会收集你的联系方式。如需回复，请主动发送邮件联系作者。</Text>
+          <Button
+            className='feedback-email-button'
+            onClick={() => void Taro.setClipboardData({ data: AUTHOR_EMAIL })}
+          >
+            复制作者邮箱：{AUTHOR_EMAIL}
+          </Button>
         </View>
 
-        <Text className='feedback-privacy'>点击提交表示你同意将上述内容用于产品改进和本次反馈回复。请不要填写身份证、病历或真实健康数据。</Text>
+        <Text className='feedback-privacy'>反馈将匿名提交，仅用于产品改进。请勿填写姓名、微信号、手机号、邮箱、病历或真实健康数据。</Text>
         <Button className='feedback-primary' loading={submitting} disabled={submitting} onClick={() => void submit()}>
           {submitting ? '正在提交……' : '提交反馈'}
         </Button>

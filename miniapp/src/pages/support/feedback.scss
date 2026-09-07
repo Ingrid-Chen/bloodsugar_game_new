@@ -39,8 +39,7 @@ $orange: #e8824a;
 .feedback-section-title { display: block; font-size: 29rpx; font-weight: 950; }
 .feedback-context__line { display: block; margin-top: 8rpx; color: #385344; font-size: 24rpx; line-height: 1.5; }
 .feedback-type-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12rpx; margin-top: 18rpx; }
-.feedback-type,
-.contact-tab {
+.feedback-type {
   margin: 0;
   border: 3rpx solid $ink;
   color: $ink;
@@ -66,18 +65,18 @@ $orange: #e8824a;
 }
 .feedback-count { display: block; margin-top: 7rpx; color: #64748b; text-align: right; font-size: 21rpx; }
 .feedback-help { display: block; margin-top: 8rpx; color: #64748b; font-size: 23rpx; line-height: 1.55; }
-.contact-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10rpx; margin-top: 18rpx; }
-.contact-tab { padding: 8rpx 4rpx; border-radius: 14rpx; }
-.feedback-input {
-  box-sizing: border-box;
-  width: 100%;
-  height: 82rpx;
-  margin-top: 14rpx;
-  padding: 0 18rpx;
+.feedback-contact-card { background: #e9f4eb; }
+.feedback-email-button {
+  margin: 18rpx 0 0;
+  padding: 8rpx 14rpx;
   border: 3rpx solid $ink;
   border-radius: 16rpx;
-  background: #fff;
-  font-size: 25rpx;
+  color: $ink;
+  background: #fff5d8;
+  font-size: 23rpx;
+  font-weight: 900;
+  line-height: 1.5;
+  &::after { border: 0; }
 }
 .feedback-privacy { display: block; margin: 26rpx 12rpx 18rpx; color: #64748b; font-size: 21rpx; line-height: 1.55; }
 .feedback-primary,
@@ -117,5 +116,6 @@ $orange: #e8824a;
 }
 .feedback-success__title { display: block; margin-top: 36rpx; font-size: 42rpx; font-weight: 950; }
 .feedback-success__text { display: block; margin-top: 16rpx; color: #475569; font-size: 25rpx; }
-.feedback-success__note { display: block; margin: 18rpx 0 36rpx; color: #64748b; font-size: 23rpx; line-height: 1.6; }
+.feedback-success__note { display: block; margin: 18rpx 0 12rpx; color: #64748b; font-size: 23rpx; line-height: 1.6; }
+.feedback-success .feedback-email-button { width: 100%; margin-bottom: 28rpx; }
 .feedback-success .feedback-primary { width: 100%; }

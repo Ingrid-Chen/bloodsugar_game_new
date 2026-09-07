@@ -9,8 +9,6 @@ interface FeedbackItem {
   _id: string
   feedback_type: string
   content: string
-  contact_type?: string
-  contact?: string
   source?: string
   event_id?: number
   event_title?: string
@@ -119,7 +117,7 @@ export default function FeedbackAdminPage() {
         <View className='feedback-admin__head'>
           <Text className='feedback-admin__kicker'>仅开发预览可见</Text>
           <Text className='feedback-admin__title'>玩家反馈</Text>
-          <Text className='feedback-admin__subtitle'>联系方式只用于回复对应反馈，请勿另作他用。</Text>
+          <Text className='feedback-admin__subtitle'>这里只展示匿名反馈，不包含玩家身份或联系方式。</Text>
         </View>
 
         <View className='feedback-admin__tabs'>
@@ -164,14 +162,6 @@ export default function FeedbackAdminPage() {
                   {item.event_title && <Text>情境：{item.event_title}</Text>}
                   {item.choice_label && <Text>选择：{item.choice_label}</Text>}
                 </View>
-              )}
-              {item.contact && (
-                <Button
-                  className='feedback-admin-card__contact'
-                  onClick={() => void Taro.setClipboardData({ data: item.contact || '' })}
-                >
-                  {item.contact_type || '联系方式'}：{item.contact} · 复制
-                </Button>
               )}
               <View className='feedback-admin-card__foot'>
                 <Text>{formatDate(item.created_at)}</Text>

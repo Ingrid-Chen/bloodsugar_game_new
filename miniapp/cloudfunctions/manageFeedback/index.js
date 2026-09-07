@@ -77,7 +77,20 @@ exports.main = async (event) => {
     let query = db.collection(COLLECTION)
     if (ALLOWED_STATUSES.has(requestedStatus)) query = query.where({ status: requestedStatus })
     const response = await query.orderBy('created_at', 'desc').limit(100).get()
-    return { ok: true, items: response.data || [], viewer_key: viewerKey }
+    const items = (response.data || []).map((item) => ({
+      _id: item._id,
+      feedback_type: item.feedback_type,
+      content: item.content,
+      source: item.source,
+      event_id: item.event_id,
+      event_title: item.event_title,
+      choice_label: item.choice_label,
+      app_version: item.app_version,
+      status: item.status,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+    }))
+    return { ok: true, items, viewer_key: viewerKey }
   } catch (error) {
     console.error('[manageFeedback] request failed', {
       message: error instanceof Error ? error.message : String(error),

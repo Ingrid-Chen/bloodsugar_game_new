@@ -1,6 +1,6 @@
-const { defineConfig } = require('@tarojs/cli')
-
-module.exports = defineConfig(() => ({
+// defineConfig is an identity helper. Exporting the function directly avoids
+// loading the complete CLI a second time while Taro is initializing config.
+module.exports = () => ({
   projectName: 'bloodsugar-guide-miniapp',
   date: '2026-08-22',
   designWidth: 750,
@@ -22,4 +22,4 @@ module.exports = defineConfig(() => ({
       cssModules: { enable: false },
     },
   },
-}))
+})
