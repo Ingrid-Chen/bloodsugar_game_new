@@ -51,6 +51,7 @@ import outsideImage from '../../assets/images/s-outside.jpg'
 import teaImage from '../../assets/images/s-tea.jpg'
 import teaFourImage from '../../assets/images/s-tea-4.jpg'
 import bedtimeImage from '../../assets/images/s-bedtime.jpg'
+import shareCoverImage from '../../assets/share-cover.jpg'
 import './index.scss'
 
 const IMAGE_MAP: Record<string, string> = {
@@ -995,13 +996,13 @@ export default function IndexPage() {
   useShareAppMessage(() => ({
     title: SHARE_TITLE,
     path: SHARE_PATH,
-    imageUrl: startImage,
+    imageUrl: shareCoverImage,
   }))
 
   useShareTimeline(() => ({
     title: SHARE_TITLE,
     query: 'from=timeline',
-    imageUrl: startImage,
+    imageUrl: shareCoverImage,
   }))
 
   const game = useGameLoop()
