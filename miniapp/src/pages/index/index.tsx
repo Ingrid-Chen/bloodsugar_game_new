@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Button, Image, ScrollView, Text, View } from '@tarojs/components'
 import type { BaseEventOrig, ITouchEvent } from '@tarojs/components/types/common'
-import Taro from '@tarojs/taro'
+import Taro, { useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { useGameLoop } from '../../hooks/useGameLoop'
 import {
   DAY_NAMES,
@@ -72,6 +72,8 @@ const IMAGE_MAP: Record<string, string> = {
 }
 
 const DEFAULT_PLAYER_NAME = '小糖'
+const SHARE_TITLE = '测测你的血糖知识：你能健康生活7天吗？'
+const SHARE_PATH = '/pages/index/index'
 
 function getImage(path?: string): string {
   return (path && IMAGE_MAP[path]) || startImage
@@ -990,6 +992,18 @@ function EndScreen({
 }
 
 export default function IndexPage() {
+  useShareAppMessage(() => ({
+    title: SHARE_TITLE,
+    path: SHARE_PATH,
+    imageUrl: startImage,
+  }))
+
+  useShareTimeline(() => ({
+    title: SHARE_TITLE,
+    query: 'from=timeline',
+    imageUrl: startImage,
+  }))
+
   const game = useGameLoop()
   const nickname = DEFAULT_PLAYER_NAME
   const [showHome, setShowHome] = useState(true)
