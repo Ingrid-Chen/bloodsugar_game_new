@@ -30,6 +30,14 @@ type Strategy = {
   preferredProbability: number
 }
 
+const PASS_RATE_TARGETS: Record<string, { min: number; max: number }> = {
+  "随机选择": { min: 5, max: 10 },
+  "60% 选更优项": { min: 15, max: 25 },
+  "70% 选更优项": { min: 35, max: 40 },
+  "80% 选更优项": { min: 60, max: 65 },
+  "100% 选更优项": { min: 99, max: 100 },
+}
+
 type Outcome =
   | { result: "victory" }
   | { result: "death"; reason: GameOverReason; day: number; lowSugarRiskCount: number }
@@ -102,7 +110,7 @@ function runOneGame(strategy: Strategy): Outcome {
             result.deathReason,
             firstDayProtected ? "firstDay" : "nonRiskLow"
           )
-          if (firstDayProtected) firstDayGraceAvailable = false
+          // 首日是完整的新手保护期：越界会拉回警戒线，但不会直接结束。
         } else {
           return { result: "death", reason: result.deathReason, day, lowSugarRiskCount: riskCountToday }
         }
@@ -160,7 +168,7 @@ function validateData(): void {
   }
 
   const lowRiskCount = choices.filter((choice) => choice.lowSugarRisk).length
-  if (lowRiskCount !== 9) errors.push(`低糖风险选项应为 9，实际为 ${lowRiskCount}`)
+  if (lowRiskCount !== 8) errors.push(`低糖风险选项应为 8，实际为 ${lowRiskCount}`)
   if (errors.length) throw new Error(errors.join("\n"))
 }
 
@@ -195,6 +203,35 @@ function runStrategy(strategy: Strategy, games: number, seed: number) {
   }
 }
 
+function validateBalance(results: ReturnType<typeof runStrategy>[], games: number): void {
+  // 小样本只用于快速调试；大样本才作为平衡回归门禁。
+  if (games < 50_000) return
+
+  const errors: string[] = []
+  for (const result of results) {
+    const target = PASS_RATE_TARGETS[result.strategy]
+    const passRate = result.victories / result.games * 100
+    const firstDayRate = result.firstDayDeaths / result.games * 100
+    const lowShare = result.deaths ? result.lowDeaths / result.deaths * 100 : 0
+
+    if (!target || passRate < target.min || passRate > target.max) {
+      errors.push(`${result.strategy} 通关率 ${passRate.toFixed(1)}%，目标 ${target?.min ?? "?"}%～${target?.max ?? "?"}%`)
+    }
+    if (firstDayRate > 5) {
+      errors.push(`${result.strategy} 第一天死亡率 ${firstDayRate.toFixed(1)}%，目标不超过 5%`)
+    }
+    if (result.deaths > 0 && (lowShare < 15 || lowShare > 25)) {
+      errors.push(`${result.strategy} 低血糖占死亡 ${lowShare.toFixed(1)}%，目标 15%～25%`)
+    }
+    if (result.invalidLowDeaths !== 0) {
+      errors.push(`${result.strategy} 出现 ${result.invalidLowDeaths} 局无连续风险的低血糖死亡`)
+    }
+  }
+
+  if (errors.length) throw new Error(`数值平衡校验失败：\n${errors.join("\n")}`)
+  console.log("数值平衡校验通过")
+}
+
 validateData()
 const requestedGames = Number(process.argv[2])
 const games = Number.isFinite(requestedGames) && requestedGames > 0
@@ -203,6 +240,6 @@ const games = Number.isFinite(requestedGames) && requestedGames > 0
 
 console.log(`数据版本: ${GAME_DATA_VERSION}`)
 console.log(`每种策略模拟: ${games.toLocaleString("zh-CN")} 局`)
-for (const [index, strategy] of STRATEGIES.entries()) {
-  console.log(JSON.stringify(runStrategy(strategy, games, 20260903 + index), null, 2))
-}
+const results = STRATEGIES.map((strategy, index) => runStrategy(strategy, games, 20260903 + index))
+results.forEach((result) => console.log(JSON.stringify(result, null, 2)))
+validateBalance(results, games)

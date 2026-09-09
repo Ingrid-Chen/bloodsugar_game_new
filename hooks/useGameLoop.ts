@@ -142,7 +142,6 @@ export function useGameLoop() {
             result.deathReason,
             firstDayProtected ? "firstDay" : "nonRiskLow"
           )
-          if (firstDayProtected) setFirstDayGraceAvailable(false)
           setPrevStats(stats)
           setStats(rescued)
           setPendingTip({
@@ -151,7 +150,7 @@ export function useGameLoop() {
             effect: choice.effect,
             penalty: { foodComa: false, starvation: false },
             boundaryWarning: firstDayProtected
-              ? "第一次越界触发新手保护，状态已拉回警戒线；当天再次越界会结束游戏。"
+              ? "首日新手保护已将状态拉回警戒线；从第二天起，再次越界将结束游戏。"
               : "这次还没有形成连续低糖风险，状态已拉回警戒线；接下来仍要及时补能。",
           })
           setPhase("tip")

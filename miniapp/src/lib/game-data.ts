@@ -54,7 +54,7 @@ export interface GameEvent {
 }
 
 export const CHARACTER_NAME = "小糖"
-export const GAME_DATA_VERSION = "2026-09-04-v9"
+export const GAME_DATA_VERSION = "2026-09-09-v10"
 
 export const DAY_NAMES = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"] as const
 
@@ -118,11 +118,11 @@ const BREAKFAST_EVENTS: GameEvent[] = [
     ],
   },
   {
-    id: 3, group: "breakfast", title: "妈妈的爱", description: "妈妈特意起早冲了一碗黑芝麻核桃糊。",
+    id: 3, group: "breakfast", title: "妈妈的爱", description: "妈妈冲好芝麻核桃糊，问你要不要多加点水，还是再配个鸡蛋。",
     image: "/images/s-morning.png",
     choices: [
-      { id: "A", label: "把这碗黑芝麻核桃糊全部喝完", effect: { bloodSugar: 33, mood: 14, energy: -9, satiety: 29 }, isPreferred: false, knowledgeTags: ["食物结构与糊化","碳水份量"], scienceTip: "食物磨成细粉后，消化酶更容易接触淀粉，让它更快分解成葡萄糖。\n粉越细、喝得越多，餐后血糖越容易快速上升。" },
-      { id: "B", label: "喝半碗芝麻核桃糊，再配一个水煮蛋", effect: { bloodSugar: 10, mood: 0, energy: 9, satiety: 19 }, isPreferred: true, knowledgeTags: ["食物结构与糊化","碳水份量"], scienceTip: "粉糊减到半碗，直接减少了碳水；鸡蛋补蛋白质，也能让血糖上升更平缓。\n味道留下，份量换一下。" },
+      { id: "A", label: "多加些热水冲稀，还是把这一碗全部喝完", effect: { bloodSugar: 28, mood: 12, energy: -6, satiety: 26 }, isPreferred: false, knowledgeTags: ["糊类总量","混合餐搭配"], scienceTip: "加水只把糊冲稀，原来那份粉里的淀粉和糖并没有减少；液体又容易较快喝完，餐后血糖仍可能升得快。\n判断糊类，先看用了多少粉，不要只看稀不稀。" },
+      { id: "B", label: "按原来的浓度喝半碗，再配一个水煮蛋", effect: { bloodSugar: 12, mood: 5, energy: 8, satiety: 23 }, isPreferred: true, knowledgeTags: ["糊类总量","混合餐搭配"], scienceTip: "少喝一部分糊，才真正减少了这顿早餐里的碳水；鸡蛋补充蛋白质，也让早餐不只剩一碗糊。\n关键是少一点粉、补一点蛋白质。" },
     ],
   },
   {
@@ -134,27 +134,27 @@ const BREAKFAST_EVENTS: GameEvent[] = [
     ],
   },
   {
-    id: 5, group: "breakfast", title: "传统摊位", description: "街边传统早餐摊，豆浆飘香，油条刚出锅。",
+    id: 5, group: "breakfast", title: "传统摊位", description: "早餐摊上有豆浆、豆腐脑、油条和茶叶蛋。",
     image: "/images/s-outside.png",
     choices: [
-      { id: "A", label: "无糖豆浆配两根油条，经典组合", effect: { bloodSugar: 29, mood: 23, energy: -10, satiety: 39 }, isPreferred: false, knowledgeTags: ["糖脂组合","碳水份量"], scienceTip: "两根油条是较大份的“精制淀粉＋油脂”，无糖豆浆不能抵消它带来的血糖负担。\n油条可以吃，别一次吃两根。" },
-      { id: "B", label: "咸豆腐脑配一枚茶叶蛋，再吃半根油条", effect: { bloodSugar: 14, mood: 6, energy: 14, satiety: 34 }, isPreferred: true, knowledgeTags: ["糖脂组合","碳水份量"], scienceTip: "油条减到半根，碳水量先降下来；豆腐脑和鸡蛋补蛋白质，血糖也更平稳。\n传统早餐，换个比例就好。" },
+      { id: "A", label: "无糖豆浆配一根油条，经典又省事", effect: { bloodSugar: 23, mood: 14, energy: -5, satiety: 31 }, isPreferred: false, knowledgeTags: ["整餐结构","糖脂组合"], scienceTip: "无糖豆浆没有额外加糖，但油条仍提供精制淀粉和油脂；一根油条已经是早餐里的主要碳水来源。\n不能只盯着“无糖”，要看整顿早餐。" },
+      { id: "B", label: "小杯甜豆浆配茶叶蛋和半根油条", effect: { bloodSugar: 18, mood: 10, energy: 8, satiety: 28 }, isPreferred: true, knowledgeTags: ["整餐结构","糖脂组合"], scienceTip: "甜豆浆会带来添加糖，但小杯份量、半根油条和茶叶蛋让碳水与蛋白质更容易控制。\n这题不是“甜”一定错，而是比较整套搭配。" },
     ],
   },
   {
-    id: 6, group: "breakfast", title: "肠胃不适", description: "胃有点不舒服，需要吃点温和的。",
+    id: 6, group: "breakfast", title: "两锅白粥", description: "两碗白粥份量相同，也都配蒸蛋：一碗熬得软烂，一碗还能看见米粒。",
     image: "/images/s-morning.png",
     choices: [
-      { id: "A", label: "一大碗熬得软烂的白粥，配一点咸菜", effect: { bloodSugar: 33, mood: 14, energy: -13, satiety: 29 }, isPreferred: false, knowledgeTags: ["食物结构与糊化","混合餐搭配"], scienceTip: "白粥越软烂，淀粉糊化越充分，越容易被分解成葡萄糖。\n消化越快，餐后血糖通常升得越快。" },
-      { id: "B", label: "小碗白粥，配一份蒸蛋和一小碟嫩青菜", effect: { bloodSugar: 9, mood: 0, energy: 9, satiety: 19 }, isPreferred: true, knowledgeTags: ["食物结构与糊化","混合餐搭配"], scienceTip: "小碗白粥先控制碳水量，蒸蛋和青菜再补蛋白质、纤维，让血糖上升慢一些。\n胃口和血糖都能照顾到。" },
+      { id: "A", label: "选熬得完全看不见米粒的，觉得越软越好消化", effect: { bloodSugar: 25, mood: 8, energy: -6, satiety: 24 }, isPreferred: false, knowledgeTags: ["食物结构与糊化","进食速度"], scienceTip: "同样一份米，煮得越软烂，淀粉糊化通常越充分，也越容易被消化成葡萄糖，餐后血糖可能升得更快。\n“好入口”和“升糖慢”不是一回事。" },
+      { id: "B", label: "选还能看见米粒的，慢慢咀嚼着吃", effect: { bloodSugar: 18, mood: 6, energy: 3, satiety: 24 }, isPreferred: true, knowledgeTags: ["食物结构与糊化","进食速度"], scienceTip: "米粒保留更多结构，需要咀嚼，淀粉通常不会像软烂粥那样快速释放。\n胃能接受时，不必把粥熬到完全糊化。" },
     ],
   },
   {
-    id: 7, group: "breakfast", title: "酒店自助", description: "酒店自助早餐，各种食物摆满台面。", weekendOnly: true,
+    id: 7, group: "breakfast", title: "酒店自助", description: "酒店自助早餐里，水果、鸡蛋、蔬菜和主食都能选，你准备安排进食顺序。", weekendOnly: true,
     image: "/images/s-breakfast.jpg",
     choices: [
-      { id: "A", label: "水果富含纤维，先盛满一盘水果再吃别的", effect: { bloodSugar: 27, mood: 18, energy: -4, satiety: 14 }, isPreferred: false, knowledgeTags: ["进食顺序","水果形态"], scienceTip: "水果也含糖，一大盘空腹吃下去，会让碳水集中，餐后血糖更容易快速上升。\n水果健康，也不是无限量。" },
-      { id: "B", label: "这些水果糖分也要算进一餐，先吃蛋和蔬菜，最后留一小碟水果", effect: { bloodSugar: 14, mood: 6, energy: 19, satiety: 39 }, isPreferred: true, knowledgeTags: ["进食顺序","水果形态"], scienceTip: "先吃蛋和蔬菜，蛋白质和纤维能减缓后续糖的吸收，让餐后血糖更平缓。\n水果留成餐后小份就好。" },
+      { id: "A", label: "水果有纤维，先吃一份水果，再吃鸡蛋、蔬菜和主食", effect: { bloodSugar: 21, mood: 10, energy: 4, satiety: 29 }, isPreferred: false, knowledgeTags: ["进食顺序","水果含糖"], scienceTip: "完整水果有纤维，但也含可吸收的糖；放在最前面单独吃，血糖刺激会先到，之后还有主食继续叠加。\n水果健康，进食顺序仍会影响餐后曲线。" },
+      { id: "B", label: "水果糖分也不少，还是放在蔬菜和蛋白质之后再吃吧", effect: { bloodSugar: 15, mood: 8, energy: 9, satiety: 29 }, isPreferred: true, knowledgeTags: ["进食顺序","水果含糖"], scienceTip: "先吃蔬菜和蛋白质，再吃水果和主食，混合餐的消化吸收通常更慢，餐后血糖更容易平缓。\n水果不用戒，放在后面、小份吃即可。" },
     ],
   },
   {
@@ -241,11 +241,11 @@ const LUNCH_EVENTS: GameEvent[] = [
     ],
   },
   {
-    id: 18, group: "lunch", title: "沙拉酱", description: "沙拉旁边放着两种酱汁。",
+    id: 18, group: "lunch", title: "酸奶标签", description: "便利店冷柜里，两杯酸奶的名字都很健康。",
     image: "/images/s-lunch-3.jpg",
     choices: [
-      { id: "A", label: "两种酱各来一勺，味道更丰富，单份都不算多", effect: { bloodSugar: 24, mood: 19, energy: -5, satiety: 29 }, isPreferred: false, knowledgeTags: ["隐藏糖与酱料","碳水份量"], scienceTip: "沙拉酱可能含糖和淀粉，两种各一勺会悄悄叠加，血糖和总能量负担都会增加。\n酱料也要算进这顿饭。" },
-      { id: "B", label: "只选一种酱，蘸着吃，吃到够味就停", effect: { bloodSugar: 10, mood: 0, energy: 14, satiety: 29 }, isPreferred: true, knowledgeTags: ["隐藏糖与酱料","碳水份量"], scienceTip: "只选一种酱并蘸着吃，能减少隐藏糖和淀粉，避免餐后血糖被酱料偷偷推高。\n够味就停，不用让沙拉泡澡。" },
+      { id: "A", label: "“0蔗糖”草莓风味酸奶", effect: { bloodSugar: 12, mood: 8, energy: 6, satiety: 14 }, isPreferred: false, knowledgeTags: ["食品标签","酸奶与血糖"], scienceTip: "“0蔗糖”只说明没有添加蔗糖，不等于没有其他糖或碳水。风味酸奶还可能有水果制品、淀粉等配料。\n产品名只能初筛，最终还是要看配料表和营养表。" },
+      { id: "B", label: "原味无糖酸奶", effect: { bloodSugar: 8, mood: 6, energy: 8, satiety: 14 }, isPreferred: true, knowledgeTags: ["食品标签","酸奶与血糖"], scienceTip: "“无糖原味”通常少了额外加糖和风味配料，但牛奶本身仍有乳糖，并不是零碳水。\n相比风味名称，它的糖来源通常更简单。" },
     ],
   },
   {
@@ -348,11 +348,11 @@ const AFTERNOON_EVENTS: GameEvent[] = [
     ],
   },
   {
-    id: 31, group: "afternoon", title: "朋友的甜品", description: "朋友递来一块抹茶慕斯，期待你一起尝尝。",
+    id: 31, group: "afternoon", title: "奶茶店点单", description: "和朋友去奶茶店，两杯大小相同，你想选一杯对血糖更友好的。",
     image: "/images/s-tea-4.jpg",
     choices: [
-      { id: "A", label: "朋友很期待，完整吃完再配黑咖啡解腻", effect: { bloodSugar: 33, mood: 27, energy: -9, satiety: 19 }, isPreferred: false, knowledgeTags: ["甜品份量","餐后活动"], scienceTip: "整块慕斯里的糖和精制淀粉会让血糖上升，黑咖啡只能解腻，不能抵消它们。\n真想轻一点，直接分一半。" },
-      { id: "B", label: "邀请朋友分一半，吃完一起散步十分钟", effect: { bloodSugar: 10, mood: 8, energy: -3, satiety: 10 }, isPreferred: true, knowledgeTags: ["甜品份量","餐后活动"], scienceTip: "甜品分一半先减少糖量，饭后散步又让肌肉利用葡萄糖，餐后血糖更容易平缓。\n开心不用跟着减半。" },
+      { id: "A", label: "鲜榨果汁，不另外加糖", effect: { bloodSugar: 27, mood: 16, energy: 3, satiety: 7 }, isPreferred: false, knowledgeTags: ["果汁与血糖","含糖饮料"], scienceTip: "“不另外加糖”不等于没有糖。水果榨成汁后，天然糖仍在，完整果肉和纤维却减少了，喝起来也更快。\n果汁有水果的名字，血糖仍可能快速上升。" },
+      { id: "B", label: "鲜奶茶，三分糖，不加珍珠和奶盖", effect: { bloodSugar: 21, mood: 15, energy: 5, satiety: 9 }, isPreferred: true, knowledgeTags: ["奶茶点单","含糖饮料"], scienceTip: "三分糖仍然有糖，鲜奶也含乳糖；但去掉珍珠、奶盖等小料，含糖来源和总量通常更容易控制。\n奶茶不是健康饮料，点小杯、低糖、去小料会相对稳妥。" },
     ],
   },
   {
@@ -431,11 +431,11 @@ const DINNER_EVENTS: GameEvent[] = [
     ],
   },
   {
-    id: 41, group: "dinner", title: "周末大餐", description: "周末大餐，朋友点了芝士烤饼。", weekendOnly: true,
+    id: 41, group: "dinner", title: "周末大餐", description: "周末聚餐，桌上有芝士烤饼、烤肉、蔬菜和米饭。", weekendOnly: true,
     image: "/images/s-dinner-party.png",
     choices: [
-      { id: "A", label: "烤饼里有肉和芝士，吃三小块就不再点别的主食", effect: { bloodSugar: 27, mood: 32, energy: -23, satiety: 49 }, isPreferred: false, knowledgeTags: ["糖脂组合","碳水份量"], scienceTip: "芝士烤饼是典型的高脂高碳水组合，脂肪可能让血糖峰值来得更晚、持续更久。\n当下没升高，也别急着继续加量。" },
-      { id: "B", label: "先吃一块烤饼配蔬菜，仍饿再加第二块", effect: { bloodSugar: 9, mood: 0, energy: 4, satiety: 20 }, isPreferred: true, knowledgeTags: ["糖脂组合","碳水份量"], scienceTip: "先吃一块配蔬菜，能减少一次吃下的碳水；仍饿再加，血糖负担也更容易控制。\n别用“没吃饭”给第二块通行证。" },
+      { id: "A", label: "烤饼里有肉和芝士，把它当菜，再配半碗米饭", effect: { bloodSugar: 28, mood: 18, energy: -8, satiety: 37 }, isPreferred: false, knowledgeTags: ["隐藏主食","碳水份量"], scienceTip: "芝士和肉不会让面皮消失：烤饼本身已经提供一份淀粉，再配米饭就叠加了两种主食。\n有馅、有肉的饼，也要算主食。" },
+      { id: "B", label: "把烤饼当主食，配烤肉和蔬菜，不再另外盛米饭", effect: { bloodSugar: 18, mood: 15, energy: 5, satiety: 34 }, isPreferred: true, knowledgeTags: ["隐藏主食","碳水份量"], scienceTip: "把烤饼计入主食，再用烤肉和蔬菜补蛋白质、纤维，就能避免重复叠加米饭。\n先认清主食藏在哪里，再决定要不要添饭。" },
     ],
   },
   {
@@ -471,11 +471,11 @@ const DINNER_EVENTS: GameEvent[] = [
     ],
   },
   {
-    id: 46, group: "dinner", title: "厨房炒菜", description: "自己下厨炒菜。",
+    id: 46, group: "dinner", title: "晚餐拼盘", description: "晚餐有南瓜、玉米、绿叶菜、鸡肉和米饭，你准备装一盘。",
     image: "/images/s-dinner.png",
     choices: [
-      { id: "A", label: "加两勺水淀粉收成浓汁，少放油也能好吃", effect: { bloodSugar: 23, mood: 18, energy: -4, satiety: 25 }, isPreferred: false, knowledgeTags: ["食物结构与糊化","隐藏淀粉"], scienceTip: "水淀粉受热会糊化，浓芡会让每口菜裹上更多淀粉，吃下后同样会变成葡萄糖。\n少油不等于少碳水。" },
-      { id: "B", label: "只用半勺水淀粉做薄芡，让汁刚好挂住菜", effect: { bloodSugar: 7, mood: 0, energy: 10, satiety: 25 }, isPreferred: true, knowledgeTags: ["食物结构与糊化","隐藏淀粉"], scienceTip: "薄芡只用少量水淀粉，附着在菜上的碳水更少，对餐后血糖的影响也更小。\n够亮、够味就行。" },
+      { id: "A", label: "南瓜和玉米都算蔬菜，多夹一些，再配半碗米饭和鸡肉", effect: { bloodSugar: 28, mood: 10, energy: -5, satiety: 37 }, isPreferred: false, knowledgeTags: ["淀粉类食物","主食叠加"], scienceTip: "南瓜和玉米虽然来自植物，但淀粉含量明显高于绿叶菜；再配米饭，会把几种碳水叠在同一餐。\n颜色像蔬菜，不代表可以忽略主食份量。" },
+      { id: "B", label: "把南瓜和玉米算进主食，另外搭配绿叶菜和鸡肉", effect: { bloodSugar: 17, mood: 8, energy: 6, satiety: 33 }, isPreferred: true, knowledgeTags: ["淀粉类食物","主食叠加"], scienceTip: "把南瓜和玉米计入主食，再搭配绿叶菜和鸡肉，能让这餐的碳水、纤维和蛋白质更清楚。\n不是不吃南瓜玉米，而是别把它们当成不限量的叶菜。" },
     ],
   },
   {
@@ -511,11 +511,11 @@ const DINNER_EVENTS: GameEvent[] = [
     ],
   },
   {
-    id: 51, group: "dinner", title: "极寒的考验", description: "冬天在户外等了半小时公交车，被冻得瑟瑟发抖，身体热量大量流失。",
+    id: 51, group: "dinner", title: "极寒的考验", description: "在户外冻了很久，旁边有热饮店和烤红薯摊，距离晚餐还有一小时。",
     image: "/images/s-outside.png",
     choices: [
-      { id: "A", label: "先到室内取暖，再吃一个热红薯补能量", effect: { bloodSugar: 19, mood: 19, energy: 14, satiety: 20 }, isPreferred: true, knowledgeTags: ["寒冷与补能","碳水作用"], scienceTip: "冷到发抖时身体耗能增加，红薯能补碳水、帮助血糖和体力回升，但取暖仍是第一步。\n反应变慢或动作笨拙要及时求助。" },
-      { id: "B", label: "担心晚餐前再加碳水，先喝温水等回家", effect: { bloodSugar: -11, mood: -14, energy: -18, satiety: 4 }, isPreferred: false, knowledgeTags: ["寒冷与补能","碳水作用"], lowSugarRisk: true, scienceTip: "温水不能提供葡萄糖，冷到发抖时只喝水，血糖和体力可能继续下降。\n先避风取暖并补碳水，症状加重及时求助。" },
+      { id: "A", label: "买一杯热奶茶暖身，回家把晚餐米饭减半", effect: { bloodSugar: 24, mood: 15, energy: 8, satiety: 9 }, isPreferred: false, knowledgeTags: ["液体糖","主食换算"], scienceTip: "热奶茶能带来温暖和碳水，但液体糖吸收较快；即使晚餐少吃半碗饭，饮料里的糖仍要计入全天摄入。\n暖身可以，甜饮也要算一份碳水。" },
+      { id: "B", label: "买一个烤红薯暖身，回家把晚餐米饭减半", effect: { bloodSugar: 17, mood: 14, energy: 12, satiety: 19 }, isPreferred: true, knowledgeTags: ["食物结构","主食换算"], scienceTip: "红薯同样会升糖，但保留了固体结构和部分纤维，通常比快速喝下甜饮更有饱腹感。\n把红薯算进晚餐主食，就不会重复叠加。" },
     ],
   },
 ]
@@ -599,11 +599,11 @@ export function getEventById(id: number): GameEvent | null {
 
 // 在第 2～7 天中随机选择一天，把更容易走向低血糖的事件集中在那一天。
 const LOW_SUGAR_DAY_EVENT_IDS: Record<EventGroup, number[]> = {
-  breakfast: [1, 10, 11],
-  lunch: [19, 25],
-  afternoon: [27, 36, 37, 38, 39],
-  dinner: [50, 51],
-  evening: [53, 58],
+  breakfast: [1, 10],
+  lunch: [25],
+  afternoon: [27, 37],
+  dinner: [50],
+  evening: [58],
 }
 
 export function createSpecialLowSugarDay(): number {
@@ -752,10 +752,10 @@ export function computeNightlyReport(stats: GameStats): NightlyReport {
   const notes: string[] = []
   let tier: "perfect" | "hangover" | "normal" = "normal"
 
-  if (sleepBs >= 80) {
+  if (sleepBs >= 75) {
     tier = "hangover"
-    energyResult = Math.min(100, stats.energy + 15)
-    moodDelta += -15
+    energyResult = Math.min(100, stats.energy + 10)
+    moodDelta += -18
     notes.push("糖宿醉! 今晚可能睡得不够安稳")
   } else if (sleepBs >= 40 && sleepBs <= 60) {
     tier = "perfect"
@@ -764,8 +764,8 @@ export function computeNightlyReport(stats: GameStats): NightlyReport {
     notes.push("完美控糖! 血糖完美入眠，神清气爽")
   } else {
     tier = "normal"
-    energyResult = Math.min(100, stats.energy + 40)
-    moodDelta += -5
+    energyResult = Math.min(100, stats.energy + 30)
+    moodDelta += -8
     notes.push("常规恢复，打工人的普通一夜")
   }
 
@@ -832,11 +832,11 @@ export function checkGameOver(
 }
 
 export const BALANCE_POLICY = {
-  firstDayGraceCount: 1,
-  firstDayHighRescueTo: 90,
-  firstDayLowRescueTo: 35,
-  firstDayEnergyRescueTo: 15,
-  firstDayMoodRescueTo: 15,
+  protectEntireFirstDay: true,
+  firstDayHighRescueTo: 65,
+  firstDayLowRescueTo: 40,
+  firstDayEnergyRescueTo: 45,
+  firstDayMoodRescueTo: 35,
   lowSugarDeathMinRiskActions: 2,
   nonRiskLowRescueTo: 35,
 } as const
@@ -1010,8 +1010,9 @@ export function applyPostChoicePenalties(stats: GameStats): { stats: GameStats; 
   return { stats: s, penalty }
 }
 
-// Inter-meal metabolism: blood sugar toward 45 (40% of gap, max 12).
-// 普通日 vs 低血糖日使用不同的拉回/漂移参数。
+// 时段推进：血糖向 45 回落，精力和饱腹随时间消耗。
+// 较高的精力消耗让连续的不利选择累积成风险，同时保证全选更优项可稳定通关。
+// 普通日 vs 低血糖日使用不同的血糖拉回/漂移参数。
 export function applyInterMealMetabolism(
   stats: GameStats,
   opts?: { isLowSugarFocusDay?: boolean }
@@ -1042,7 +1043,7 @@ export function applyInterMealMetabolism(
   return {
     bloodSugar: clamp(stats.bloodSugar + bsDelta),
     mood: stats.mood,
-    energy: clamp(stats.energy - 4),
+    energy: clamp(stats.energy - 18),
     satiety: clamp(stats.satiety - 12),
   }
 }
